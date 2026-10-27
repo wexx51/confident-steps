@@ -18,7 +18,7 @@ const PORT = Number(process.env.PORT) || 3000;
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
 const KEY = GEMINI_KEY || process.env.ANTHROPIC_API_KEY;
 const PROVIDER = GEMINI_KEY ? 'gemini' : 'anthropic';
-const MODEL = process.env.MODEL || (PROVIDER === 'gemini' ? 'gemini-3.8-flash' : 'claude-haiku-5-5');
+const MODEL = process.env.MODEL || (PROVIDER === 'gemini' ? 'gemini-3.5-flash-lite' : 'claude-haiku-5-5');
 const GEMINI_URL = process.env.GEMINI_URL || `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 const ORIGIN = process.env.ALLOWED_ORIGIN || '';
 const RATE = Number(process.env.RATE_PER_MIN) || 12;
@@ -61,14 +61,14 @@ async function handleAI(req, res) {
     if (PROVIDER === 'gemini') {
       const mk = think => JSON.stringify({contents: [{role: 'user', parts: [{text: prompt}].concat(image ? [{inline_data: {mime_type: image.mime, data: image.data}}] : [])}], generationConfig: Object.assign({maxOutputTokens: 700, temperature: 0.5}, think ? {thinkingConfig: {thinkingLevel: 'low'}} : {})});
       let think = true;
-      const models = [MODEL].concat((process.env.FALLBACK_MODELS || 'gemini-3.5-flash-lite,gemini-3.5-flash').split(',').map(x => x.trim()).filter(x => x && x !== MODEL));
+      const models = [MODEL].concat((process.env.FALLBACK_MODELS || 'gemini-3.5-flash-lite,gemini-3.8-flash,gemini-3.5-flash').split(',').map(x => x.trim()).filter(x => x && x !== MODEL));
       const started = Date.now();
       for (let i = 0; i < models.length; i++) {
         const url = process.env.GEMINI_URL || `https://generativelanguage.googleapis.com/v1beta/models/${models[i]}:generateContent`;
         for (let attempt = 0; attempt < 2; attempt++) {
           if (Date.now() - started > 24000) break;
           try {
-            r = await fetch(url, {method: 'POST', headers: {'content-type': 'application/json', 'x-goog-api-key': KEY}, body: mk(think), signal: AbortSignal.timeout(10000)});
+            r = await fetch(url, {method: 'POST', headers: {'content-type': 'application/json', 'x-goog-api-key': KEY}, body: mk(think), signal: AbortSignal.timeout(8000)});
             data = await r.json();
           } catch (e) { r = null; data = {error: String(e && e.message)}; }
           if (r && r.ok) break;

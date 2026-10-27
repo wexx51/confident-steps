@@ -692,6 +692,13 @@
       event.target.value = '';
     }
   });
+  document.addEventListener('keydown', event => {
+    const el = event.target;
+    if (event.key !== 'Enter' || event.shiftKey || event.isComposing || !el || (el.id !== 'chat-q' && el.id !== 'assist-q')) return;
+    event.preventDefault();
+    if (el.id === 'chat-q' && chatState.busy) return;
+    if (el.form && el.form.requestSubmit) el.form.requestSubmit(); else if (el.form) el.form.dispatchEvent(new Event('submit', {cancelable: true, bubbles: true}));
+  });
   document.addEventListener('submit', event => {
     if (event.target.id === 'chat-form') {
       event.preventDefault();
