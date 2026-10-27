@@ -6,7 +6,7 @@
  *   GEMINI_API_KEY=...  node server.js        (free key from Google AI Studio)
  *   or ANTHROPIC_API_KEY=sk-ant-...  node server.js   (paid Claude API)
  *
- * Optional env: PORT (3000), MODEL (default gemini-3.8-flash / claude-haiku-5-5), ALLOWED_ORIGIN (CORS, only if the site is hosted elsewhere),
+ * Optional env: FALLBACK_MODELS (comma list, tried when MODEL is busy), PORT (3000), MODEL (default gemini-3.8-flash / claude-haiku-5-5), ALLOWED_ORIGIN (CORS, only if the site is hosted elsewhere),
  *               RATE_PER_MIN (12 requests per IP per minute), DAILY_LIMIT (500 requests per day for everyone).
  * Node 18+ is required. No npm packages.
  */
@@ -59,9 +59,28 @@ async function handleAI(req, res) {
   try {
     let r, data, text;
     if (PROVIDER === 'gemini') {
-      r = await fetch(GEMINI_URL, {method: 'POST', headers: {'content-type': 'application/json', 'x-goog-api-key': KEY},
-        body: JSON.stringify({contents: [{role: 'user', parts: [{text: prompt}].concat(image ? [{inline_data: {mime_type: image.mime, data: image.data}}] : [])}], generationConfig: {maxOutputTokens: 1500, temperature: 0.6}}), signal: AbortSignal.timeout(25000)});
-      data = await r.json();
+      const mk = think => JSON.stringify({contents: [{role: 'user', parts: [{text: prompt}].concat(image ? [{inline_data: {mime_type: image.mime, data: image.data}}] : [])}], generationConfig: Object.assign({maxOutputTokens: 700, temperature: 0.5}, think ? {thinkingConfig: {thinkingLevel: 'minimal'}} : {})});
+      let think = true;
+      const models = [MODEL].concat((process.env.FALLBACK_MODELS || 'gemini-3.8-flash-lite,gemini-2.5-flash-lite,gemini-2.5-flash').split(',').map(x => x.trim()).filter(x => x && x !== MODEL));
+      const started = Date.now();
+      for (let i = 0; i < models.length; i++) {
+        const url = process.env.GEMINI_URL || `https://generativelanguage.googleapis.com/v1beta/models/${models[i]}:generateContent`;
+        for (let attempt = 0; attempt < 2; attempt++) {
+          if (Date.now() - started > 24000) break;
+          try {
+            r = await fetch(url, {method: 'POST', headers: {'content-type': 'application/json', 'x-goog-api-key': KEY}, body: mk(think), signal: AbortSignal.timeout(10000)});
+            data = await r.json();
+          } catch (e) { r = null; data = {error: String(e && e.message)}; }
+          if (r && r.ok) break;
+          console.error('AI error', models[i], r ? r.status : 'net', JSON.stringify(data).slice(0, 200));
+          if (r && r.status === 400 && think) { think = false; attempt--; continue; }
+          if (r && (r.status === 400 || r.status === 401 || r.status === 403)) break;
+          if (r && r.status === 404) break;
+          await new Promise(ok => setTimeout(ok, 700));
+        }
+        if (r && r.ok) { if (i) console.log('AI served by fallback', models[i]); break; }
+      }
+      if (!r) return send(res, 504, {error: 'upstream failed'});
       text = ((data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || []).map(p => p.text || '').join('').trim();
     } else {
       r = await fetch(process.env.ANTHROPIC_URL || 'https://api.anthropic.com/v1/messages', {method: 'POST',
