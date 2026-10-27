@@ -742,3 +742,14 @@ html.large-text{font-size:22px}body.large-text{font-size:1rem}
 .ml-sh-top{font-size:13.5px;gap:6px}.ml-sh-top>span{white-space:nowrap}.ml-seg>*{padding:4px 9px}
 .ml-note{margin-bottom:28px}
 .ml-ic.hi{background:transparent;box-shadow:none}.mx-mail.and .ml-head .ml-ic[data-sim]{background:transparent}
+
+/* bigger main navigation */
+.site-header nav{gap:10px}
+.site-header nav a{font-size:1.08rem;font-weight:600;padding:13px 20px;min-height:52px;display:inline-flex;align-items:center;border-radius:12px;text-decoration:none}
+.site-header nav a:hover{background:var(--soft);text-decoration:none}
+@media(max-width:1250px){.site-header nav a{padding:12px 14px;font-size:1rem}}
+@media(max-width:1000px){.site-header nav{gap:6px;justify-content:space-between}.site-header nav a{flex:1;justify-content:center;text-align:center;font-size:.95rem;padding:12px 6px}}
+@media(max-width:600px){.site-header nav{flex-wrap:wrap}.site-header nav a{flex:1 1 44%;min-height:50px;font-size:1rem;background:var(--soft)}}
+.site-header nav a{white-space:nowrap}
+@media(max-width:1180px){.header-inner{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px 20px;padding-block:16px}.site-header nav{grid-column:1/-1;grid-row:2;margin-left:0;justify-content:space-between;border-top:1px solid var(--line);padding-top:7px;width:100%;gap:6px}.site-header nav a{flex:1;justify-content:center;text-align:center;font-size:1rem;padding:12px 6px}.header-tools{justify-self:end}}
+@media(max-width:600px){.site-header nav a{white-space:normal}}
