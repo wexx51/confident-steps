@@ -59,9 +59,9 @@ async function handleAI(req, res) {
   try {
     let r, data, text;
     if (PROVIDER === 'gemini') {
-      const mk = think => JSON.stringify({contents: [{role: 'user', parts: [{text: prompt}].concat(image ? [{inline_data: {mime_type: image.mime, data: image.data}}] : [])}], generationConfig: Object.assign({maxOutputTokens: 700, temperature: 0.5}, think ? {thinkingConfig: {thinkingLevel: 'minimal'}} : {})});
+      const mk = think => JSON.stringify({contents: [{role: 'user', parts: [{text: prompt}].concat(image ? [{inline_data: {mime_type: image.mime, data: image.data}}] : [])}], generationConfig: Object.assign({maxOutputTokens: 700, temperature: 0.5}, think ? {thinkingConfig: {thinkingLevel: 'low'}} : {})});
       let think = true;
-      const models = [MODEL].concat((process.env.FALLBACK_MODELS || 'gemini-3.8-flash-lite,gemini-2.5-flash-lite,gemini-2.5-flash').split(',').map(x => x.trim()).filter(x => x && x !== MODEL));
+      const models = [MODEL].concat((process.env.FALLBACK_MODELS || 'gemini-3.5-flash-lite,gemini-3.5-flash').split(',').map(x => x.trim()).filter(x => x && x !== MODEL));
       const started = Date.now();
       for (let i = 0; i < models.length; i++) {
         const url = process.env.GEMINI_URL || `https://generativelanguage.googleapis.com/v1beta/models/${models[i]}:generateContent`;
