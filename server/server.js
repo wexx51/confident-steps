@@ -6,7 +6,7 @@
  *   GEMINI_API_KEY=...  node server.js        (free key from Google AI Studio)
  *   or ANTHROPIC_API_KEY=sk-ant-...  node server.js   (paid Claude API)
  *
- * Optional env: PORT (3000), MODEL (default gemini-2.5-flash / claude-haiku-5-5), ALLOWED_ORIGIN (CORS, only if the site is hosted elsewhere),
+ * Optional env: PORT (3000), MODEL (default gemini-3.8-flash / claude-haiku-5-5), ALLOWED_ORIGIN (CORS, only if the site is hosted elsewhere),
  *               RATE_PER_MIN (12 requests per IP per minute), DAILY_LIMIT (500 requests per day for everyone).
  * Node 18+ is required. No npm packages.
  */
@@ -18,7 +18,7 @@ const PORT = Number(process.env.PORT) || 3000;
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
 const KEY = GEMINI_KEY || process.env.ANTHROPIC_API_KEY;
 const PROVIDER = GEMINI_KEY ? 'gemini' : 'anthropic';
-const MODEL = process.env.MODEL || (PROVIDER === 'gemini' ? 'gemini-2.5-flash' : 'claude-haiku-5-5');
+const MODEL = process.env.MODEL || (PROVIDER === 'gemini' ? 'gemini-3.8-flash' : 'claude-haiku-5-5');
 const GEMINI_URL = process.env.GEMINI_URL || `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 const ORIGIN = process.env.ALLOWED_ORIGIN || '';
 const RATE = Number(process.env.RATE_PER_MIN) || 12;
@@ -60,7 +60,7 @@ async function handleAI(req, res) {
     let r, data, text;
     if (PROVIDER === 'gemini') {
       r = await fetch(GEMINI_URL, {method: 'POST', headers: {'content-type': 'application/json', 'x-goog-api-key': KEY},
-        body: JSON.stringify({contents: [{role: 'user', parts: [{text: prompt}].concat(image ? [{inline_data: {mime_type: image.mime, data: image.data}}] : [])}], generationConfig: {maxOutputTokens: 600, temperature: 0.6}})});
+        body: JSON.stringify({contents: [{role: 'user', parts: [{text: prompt}].concat(image ? [{inline_data: {mime_type: image.mime, data: image.data}}] : [])}], generationConfig: {maxOutputTokens: 1500, temperature: 0.6}}), signal: AbortSignal.timeout(25000)});
       data = await r.json();
       text = ((data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || []).map(p => p.text || '').join('').trim();
     } else {
@@ -71,9 +71,9 @@ async function handleAI(req, res) {
       text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('').trim();
     }
     if (!r.ok) { console.error('AI error', r.status, JSON.stringify(data).slice(0, 300)); return send(res, 502, {error: 'upstream ' + r.status}); }
-    if (!text) return send(res, 502, {error: 'empty answer'});
+    if (!text) { console.error('AI empty', JSON.stringify(data).slice(0, 400)); return send(res, 502, {error: 'empty answer'}); }
     return send(res, 200, {text});
-  } catch (e) { console.error(e); return send(res, 502, {error: 'upstream failed'}); }
+  } catch (e) { console.error('AI exception', e && e.name, e && e.message); return send(res, 504, {error: 'upstream failed'}); }
 }
 
 http.createServer((req, res) => {

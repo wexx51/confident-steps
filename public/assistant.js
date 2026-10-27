@@ -35,7 +35,7 @@
     if (window.CS_AI_ENDPOINT) {
       const body = {prompt};
       if (opts.image) body.image = {mime: opts.image.mime, data: opts.image.base64};
-      const r = await fetch(window.CS_AI_ENDPOINT, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
+      const r = await fetch(window.CS_AI_ENDPOINT, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body), signal: (window.AbortSignal && AbortSignal.timeout) ? AbortSignal.timeout(35000) : undefined});
       if (!r.ok) throw new Error('endpoint ' + r.status);
       return (await r.json()).text;
     }
