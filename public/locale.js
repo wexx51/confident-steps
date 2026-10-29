@@ -158,6 +158,8 @@
     s200: ['AI helper', 'ИИ-помощник'],
     s201: ['Turn on high contrast', 'Включить высокий контраст'],
     s202: ['High contrast', 'Высокий контраст'],
+    s203: ['About the project', 'О проекте'],
+    s204: ['About the project ↗', 'О проекте ↗'],
     s153: ['Which phone do you have?', 'Какой у вас телефон?'],
     s154: ['Phone model', 'Модель телефона'],
     s155: ['The practice screens will look like your phone.', 'Учебные экраны будут выглядеть как на вашем телефоне.']

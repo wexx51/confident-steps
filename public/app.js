@@ -84,7 +84,7 @@
   function showView(view, scroll = true) {
     if (view !== currentView) stopSpeaking();
     currentView = view;
-    ['home', 'training', 'confidence', 'survey', 'chat', 'cheatsheet', 'certificate'].forEach(name => { $('#' + name + '-view').hidden = name !== view; });
+    ['home', 'training', 'confidence', 'survey', 'chat', 'cheatsheet', 'certificate', 'project'].forEach(name => { $('#' + name + '-view').hidden = name !== view; });
     if (scroll) window.scrollTo({top: 0, behavior: 'instant'});
   }
   function home(section) {
@@ -656,6 +656,31 @@
     showView('certificate');
     renderCertificate(true);
   }
+  /* ---------- about the project ---------- */
+  function renderProject(focus = false) {
+    const block = (title, items) => `<section class="project-block"><h2>${title}</h2><ul>${items.map(i => `<li>${i}</li>`).join('')}</ul></section>`;
+    $('#project-view').innerHTML = `<button class="text-button back-link" data-action="home">${t('← Back to home', '← На главную')}</button><p class="eyebrow">${t('ABOUT THE PROJECT', 'О ПРОЕКТЕ')}</p><h1 id="project-title" tabindex="-1">${t('Confident Steps', 'Уверенный шаг')}</h1><p class="project-lead">${t('A free practice website for adults aged 55 and over. Here you can calmly try everyday digital tasks on practice screens that look like a phone or a computer: make text larger, open eGov, write in WhatsApp and Telegram, notice a suspicious message, search the internet safely.', 'Бесплатный сайт для практики для взрослых 55+. Здесь можно спокойно попробовать повседневные цифровые задачи на учебных экранах, похожих на телефон и компьютер: увеличить текст, открыть eGov, написать в WhatsApp и Telegram, распознать подозрительное сообщение, безопасно искать в интернете.')}</p>
+<div class="project-grid">${block(t('Who made it', 'Кто сделал'), [
+      t('A student ICT project of the DigiLit team, Astana IT University (2026).', 'Учебный ICT-проект команды DigiLit, Astana IT University (2026).'),
+      t('It is a learning prototype, not an official government service. App names belong to their owners.', 'Это учебный прототип, а не официальный государственный сервис. Названия приложений принадлежат их владельцам.')
+    ])}${block(t('How it works', 'Как всё устроено'), [
+      t('No registration and no payment. Just open the site and practise.', 'Без регистрации и без оплаты. Откройте сайт и практикуйтесь.'),
+      t('All screens are practice copies. Nothing is opened, changed or sent on your real phone or computer, so mistakes are safe.', 'Все экраны учебные. На вашем настоящем телефоне или компьютере ничего не открывается, не меняется и не отправляется, поэтому ошибаться не страшно.'),
+      t('Every exercise has a hint, a printable cheat sheet and, after you finish, a learning certificate.', 'У каждой практики есть подсказка, шпаргалка для печати и учебный сертификат после прохождения.')
+    ])}${block(t('Your data', 'Ваши данные'), [
+      t('Progress and confidence ratings are kept only in this browser, and only if you turn on saving. You can delete them at any time.', 'Прогресс и отметки уверенности хранятся только в этом браузере и только если вы включили сохранение. Их можно удалить в любой момент.'),
+      t('Survey answers are not sent anywhere: you download them as a file and decide yourself whether to share it.', 'Ответы анкеты никуда не отправляются: вы скачиваете их файлом и сами решаете, передавать ли его.'),
+      t('The name on a certificate stays on the page and is not saved.', 'Имя на сертификате остаётся на странице и не сохраняется.'),
+      t('Questions and screenshots for the AI helper go through our server to Google Gemini to get an answer. The site does not store them. Please do not share phone numbers, IIN, card numbers or codes.', 'Вопросы и скриншоты для ИИ-помощника идут через наш сервер в Google Gemini, чтобы получить ответ. Сайт их не хранит. Пожалуйста, не пишите номера телефонов, ИИН, номера карт и коды.')
+    ])}${block(t('Easier to read and hear', 'Удобно читать и слушать'), [
+      t('“AA” in the header makes all text larger.', 'Кнопка «АА» в шапке делает весь текст крупнее.'),
+      t('◐ turns on high contrast: black background, white text, yellow buttons.', 'Кнопка ◐ включает высокий контраст: чёрный фон, белый текст, жёлтые кнопки.'),
+      t('“Read aloud” in each step uses the voice built into your browser.', 'Кнопка «Прочитать вслух» в каждом шаге использует голос, встроенный в ваш браузер.')
+    ])}</div>
+<p class="project-foot">${t('Sources of the app icons are listed in', 'Источники значков приложений перечислены в файле')} <a href="ICON_SOURCES.md" target="_blank" rel="noopener">ICON_SOURCES.md</a>.</p>`;
+    if (focus) focusTitle('#project-title');
+  }
+  function showProject() { showView('project'); renderProject(true); }
   function completeTask() {
     const id = active.id;
     if (!state.progress[state.device].includes(id)) state.progress[state.device].push(id);
@@ -714,6 +739,7 @@
       case 'practices': home('practices'); break;
       case 'about': home('about'); break;
       case 'survey': showSurvey(); break;
+      case 'project': showProject(); break;
       case 'chat': showChat(); break;
       case 'chat-chip': sendChat(button.dataset.q); break;
       case 'chat-remove': chatState.image = null; refreshChat(); break;
@@ -856,6 +882,8 @@
       const keep = $('#chat-q') ? $('#chat-q').value : ''; renderChat(); if ($('#chat-q')) $('#chat-q').value = keep;
     } else if (currentView === 'certificate' && certificate) {
       renderCertificate();
+    } else if (currentView === 'project') {
+      renderProject();
     } else if (currentView === 'cheatsheet') {
       renderCheatsheet();
     } else if (currentView === 'confidence' && confidenceContext) {
@@ -869,10 +897,10 @@
   renderCards();
   refreshFontLabel();
   refreshContrastLabel();
-  /* direct links: #survey, #practices, #about, #cheatsheet/<lesson> */
+  /* direct links: #survey, #project, #practices, #about, #cheatsheet/<lesson> */
   function route() {
     const hash = location.hash;
-    if (hash === '#survey') showSurvey(); else if (hash === '#practices') home('practices'); else if (hash === '#about') home('about');
+    if (hash === '#survey') showSurvey(); else if (hash === '#project') showProject(); else if (hash === '#practices') home('practices'); else if (hash === '#about') home('about');
     else if (hash.startsWith('#cheatsheet/')) showCheatsheet(hash.slice(12));
   }
   route();
