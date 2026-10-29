@@ -84,7 +84,7 @@
   function showView(view, scroll = true) {
     if (view !== currentView) stopSpeaking();
     currentView = view;
-    ['home', 'training', 'confidence', 'survey', 'chat'].forEach(name => { $('#' + name + '-view').hidden = name !== view; });
+    ['home', 'training', 'confidence', 'survey', 'chat', 'cheatsheet'].forEach(name => { $('#' + name + '-view').hidden = name !== view; });
     if (scroll) window.scrollTo({top: 0, behavior: 'instant'});
   }
   function home(section) {
@@ -105,7 +105,7 @@
     $('#progress-summary').textContent = t(`Completed ${state.progress[state.device].filter(x => ids().includes(x)).length} of ${ids().length} exercises · ${deviceLabel()}`, `Пройдено ${state.progress[state.device].filter(x => ids().includes(x)).length} из ${ids().length} практик · ${deviceLabel()}`);
     $('#task-grid').innerHTML = ids().map((id, index) => {
       const task = getTask(id), completed = state.progress[state.device].includes(id);
-      return `<article class="task-card${completed ? ' completed' : ''}"><div class="task-card-top"><span class="task-icon" aria-hidden="true">${task.icon}</span><span class="task-number">0${index + 1}</span></div><h3>${task.title}${completed ? `<small class="completed-tag">${t('✓ Completed', '✓ Пройдено')}</small>` : ''}</h3><p>${task.description}</p><button type="button" data-task="${id}" data-testid="task-${id}" aria-label="${completed ? t('Repeat exercise', 'Повторить практику') : t('Start exercise', 'Начать практику')}: ${task.title}">${completed ? t('Repeat exercise', 'Повторить практику') : t('Start exercise', 'Начать практику')} <span aria-hidden="true">↗</span></button></article>`;
+      return `<article class="task-card${completed ? ' completed' : ''}"><div class="task-card-top"><span class="task-icon" aria-hidden="true">${task.icon}</span><span class="task-number">0${index + 1}</span></div><h3>${task.title}${completed ? `<small class="completed-tag">${t('✓ Completed', '✓ Пройдено')}</small>` : ''}</h3><p>${task.description}</p><button type="button" data-task="${id}" data-testid="task-${id}" aria-label="${completed ? t('Repeat exercise', 'Повторить практику') : t('Start exercise', 'Начать практику')}: ${task.title}">${completed ? t('Repeat exercise', 'Повторить практику') : t('Start exercise', 'Начать практику')} <span aria-hidden="true">↗</span></button><button class="cs-link" data-action="cheatsheet" data-id="${id}" data-testid="cheatsheet-${id}">${t('Cheat sheet to print', 'Шпаргалка для печати')}</button></article>`;
     }).join('');
   }
 
@@ -325,9 +325,10 @@
   }
 
   /* ---------- step text ---------- */
-  function stepMeta() {
-    if (lessonIds.includes(active.id)) { const st = lessons()[active.id].steps[active.step]; return {title: t(...st.title), text: t(...st.text), hint: t(...st.hint)}; }
-    const phone = state.device === 'phone', ios = state.os === 'ios', s = active.step;
+  /* text of one step; defaults to the step on screen, the cheat sheet asks for any lesson and step */
+  function stepMeta(id = active.id, s = active.step) {
+    if (lessonIds.includes(id)) { const st = lessons()[id].steps[s]; return {title: t(...st.title), text: t(...st.text), hint: t(...st.hint)}; }
+    const phone = state.device === 'phone', ios = state.os === 'ios';
     const m = {
       text: [
         {title: phone ? t('Open settings', 'Откройте настройки') : state.dos === 'mac' ? t('Open Safari’s View menu', 'Откройте меню «Вид» в Safari') : t('Open the Chrome menu', 'Откройте меню Chrome'),
@@ -362,7 +363,7 @@
         {title: t('Close the suspicious message', 'Закройте подозрительное сообщение'), text: t('You noticed the pressure, kept the code private and chose a reliable way to check. Close the practice message.', 'Вы заметили давление, не передали код и выбрали надёжный способ проверки. Закройте учебное сообщение.'), hint: t('If you have already shared information, contact the organisation using official details you find yourself. Here, we practise the first safe step: pause and check.', 'Если уже передали данные, обратитесь в соответствующую организацию по самостоятельно найденному официальному контакту. Здесь мы тренируем первый безопасный шаг: остановиться и проверить.')}
       ]
     };
-    return m[active.id][s];
+    return m[id][s];
   }
 
 
@@ -625,6 +626,19 @@
     feedback(() => retryMessages()[action] || t('You can try again. The hint can help you find the next step.', 'Можно попробовать ещё раз. Подсказка поможет найти следующий шаг.'));
     noteWrong(action);
   }
+  /* ---------- printable cheat sheet for one lesson ---------- */
+  let cheatsheetId = null;
+  function renderCheatsheet(focus = false) {
+    const id = cheatsheetId, task = getTask(id);
+    $('#cheatsheet-view').innerHTML = `<div class="no-print cs-tools"><button class="text-button back-link" data-action="practices">${t('← All exercises', '← Все практики')}</button><div class="cs-actions"><button class="button primary" data-action="print" data-testid="print-cheatsheet">${t('Print', 'Распечатать')}</button><button class="button secondary" data-task="${id}">${t('Start this exercise', 'Начать эту практику')}</button></div><p class="small">${t(`The steps are for ${deviceLabel()}. To get them for another device, choose it on the home page.`, `Шаги написаны для устройства ${deviceLabel()}. Для другого устройства выберите его на главной странице.`)}</p></div><article class="cheatsheet"><p class="eyebrow">${t('CHEAT SHEET', 'ШПАРГАЛКА')} · ${deviceLabel().toUpperCase()}</p><h1 id="cheatsheet-title" tabindex="-1">${task.title}</h1><p class="cs-lead">${task.description}</p><ol class="cs-steps">${[0, 1, 2, 3].map(s => { const m = stepMeta(id, s); return `<li class="cs-step"><span class="cs-num" aria-hidden="true">${s + 1}</span><div><h2>${m.title}</h2><p>${m.text}</p><p class="cs-hint"><strong>${t('Hint:', 'Подсказка:')}</strong> ${m.hint}</p></div></li>`; }).join('')}</ol><div class="takeaway"><strong>${t('Remember', 'Запомните')}</strong><br>${task.takeaway}</div><p class="cs-foot">${t('Confident Steps · practice at your own pace. A learning aid, not an official instruction. Screens on your device may look a little different.', 'Уверенный шаг · практика без спешки. Учебная памятка, не официальная инструкция. На вашем устройстве экраны могут выглядеть немного иначе.')}</p></article>`;
+    if (focus) focusTitle('#cheatsheet-title');
+  }
+  function showCheatsheet(id) {
+    if (!ids().includes(id)) { home('practices'); return; }
+    cheatsheetId = id;
+    showView('cheatsheet');
+    renderCheatsheet(true);
+  }
   function completeTask() {
     const id = active.id;
     if (!state.progress[state.device].includes(id)) state.progress[state.device].push(id);
@@ -637,7 +651,7 @@
     stopSpeaking();
     const id = active.id;
     const next = ids().find(task => !state.progress[state.device].includes(task));
-    $('#training-view').innerHTML = `<button class="text-button back-link" data-action="practices">${t('← All exercises', '← Все практики')}</button><div class="finish-panel"><div class="finish-check" aria-hidden="true">✓</div><p class="eyebrow">${t('EXERCISE COMPLETE', 'ПРАКТИКА ЗАВЕРШЕНА')} · ${deviceLabel().toUpperCase()}</p><h1 id="training-title" tabindex="-1">${t('You have taken another step.', 'У вас получился ещё один шаг.')}</h1><p>${t(`You completed “${getTask(id).title.toLowerCase()}”. You can repeat it as often as you like.`, `Вы прошли практику «${getTask(id).title.toLowerCase()}». Её можно повторить столько раз, сколько вам удобно.`)}</p><div class="takeaway">${getTask(id).takeaway}</div><div class="finish-actions">${next ? `<button class="button primary" data-task="${next}" data-testid="next-practice">${t('Next exercise', 'Следующая практика')} <span aria-hidden="true">→</span></button>` : `<button class="button primary" data-action="practices">${t('All exercises', 'Все практики')} <span aria-hidden="true">→</span></button>`}<button class="button secondary" data-action="confidence-after" data-testid="confidence-after">${t('Rate your confidence', 'Отметить уверенность')}</button><button class="text-button" data-task="${id}">${t('Repeat this exercise', 'Повторить эту практику')}</button></div>${id === 'message' ? `<div class="sc-offer"><strong>${t('Want more practice?', 'Хотите потренироваться ещё?')}</strong><p>${t('The helper can write a new made-up message for you to check.', 'Помощник придумает для вас новое учебное сообщение, а вы проверите его.')}</p><button class="button secondary" data-action="sc-new" data-testid="new-situation">${t('New situation from the helper', 'Новая ситуация от помощника')}</button></div>` : ''}<p class="mock-note">${t(`Completed ${state.progress[state.device].length} of ${ids().length} exercises for the ${state.device === 'phone' ? 'phone' : 'computer'}. This records completion; it does not measure your ability.`, `Пройдено ${state.progress[state.device].length} из ${ids().length} практик для ${state.device === 'phone' ? 'телефона' : 'компьютера'}. Это отметка прохождения, а не оценка способностей.`)}</p></div>`;
+    $('#training-view').innerHTML = `<button class="text-button back-link" data-action="practices">${t('← All exercises', '← Все практики')}</button><div class="finish-panel"><div class="finish-check" aria-hidden="true">✓</div><p class="eyebrow">${t('EXERCISE COMPLETE', 'ПРАКТИКА ЗАВЕРШЕНА')} · ${deviceLabel().toUpperCase()}</p><h1 id="training-title" tabindex="-1">${t('You have taken another step.', 'У вас получился ещё один шаг.')}</h1><p>${t(`You completed “${getTask(id).title.toLowerCase()}”. You can repeat it as often as you like.`, `Вы прошли практику «${getTask(id).title.toLowerCase()}». Её можно повторить столько раз, сколько вам удобно.`)}</p><div class="takeaway">${getTask(id).takeaway}</div><div class="finish-actions">${next ? `<button class="button primary" data-task="${next}" data-testid="next-practice">${t('Next exercise', 'Следующая практика')} <span aria-hidden="true">→</span></button>` : `<button class="button primary" data-action="practices">${t('All exercises', 'Все практики')} <span aria-hidden="true">→</span></button>`}<button class="button secondary" data-action="confidence-after" data-testid="confidence-after">${t('Rate your confidence', 'Отметить уверенность')}</button><button class="text-button" data-task="${id}">${t('Repeat this exercise', 'Повторить эту практику')}</button><button class="text-button" data-action="cheatsheet" data-id="${id}">${t('Cheat sheet to print', 'Шпаргалка для печати')}</button></div>${id === 'message' ? `<div class="sc-offer"><strong>${t('Want more practice?', 'Хотите потренироваться ещё?')}</strong><p>${t('The helper can write a new made-up message for you to check.', 'Помощник придумает для вас новое учебное сообщение, а вы проверите его.')}</p><button class="button secondary" data-action="sc-new" data-testid="new-situation">${t('New situation from the helper', 'Новая ситуация от помощника')}</button></div>` : ''}<p class="mock-note">${t(`Completed ${state.progress[state.device].length} of ${ids().length} exercises for the ${state.device === 'phone' ? 'phone' : 'computer'}. This records completion; it does not measure your ability.`, `Пройдено ${state.progress[state.device].length} из ${ids().length} практик для ${state.device === 'phone' ? 'телефона' : 'компьютера'}. Это отметка прохождения, а не оценка способностей.`)}</p></div>`;
     if (focus) { window.scrollTo({top: 0, behavior: 'instant'}); focusTitle('#training-title'); }
   }
   function scale(phase, title) {
@@ -700,6 +714,8 @@
         announce(enabled ? t('High contrast is on.', 'Высокий контраст включён.') : t('Normal colours are on.', 'Обычные цвета включены.')); break;
       }
       case 'speak': speakStep(); break;
+      case 'cheatsheet': showCheatsheet(button.dataset.id); break;
+      case 'print': window.print(); break;
       case 'hint': active.hint = !active.hint; $('#step-hint').hidden = !active.hint; button.setAttribute('aria-expanded', String(active.hint)); break;
       case 'previous': if (active.step > 0) { active.step--; active.feedback = null; active.tone = ''; active.hint = false; resetAssist(); renderTraining(true); } else home('practices'); break;
       case 'next': if (!active.valid[active.step]) return; if (active.step === 3) completeTask(); else { active.step++; active.feedback = null; active.tone = ''; active.hint = false; resetAssist(); renderTraining(true); } break;
@@ -814,6 +830,8 @@
       else renderTraining();
     } else if (currentView === 'chat') {
       const keep = $('#chat-q') ? $('#chat-q').value : ''; renderChat(); if ($('#chat-q')) $('#chat-q').value = keep;
+    } else if (currentView === 'cheatsheet') {
+      renderCheatsheet();
     } else if (currentView === 'confidence' && confidenceContext) {
       showConfidence(confidenceContext.mode, confidenceContext.task, true);
     }
@@ -825,7 +843,14 @@
   renderCards();
   refreshFontLabel();
   refreshContrastLabel();
-  if (location.hash === '#survey') showSurvey(); else if (location.hash === '#practices') home('practices'); else if (location.hash === '#about') home('about');
+  /* direct links: #survey, #practices, #about, #cheatsheet/<lesson> */
+  function route() {
+    const hash = location.hash;
+    if (hash === '#survey') showSurvey(); else if (hash === '#practices') home('practices'); else if (hash === '#about') home('about');
+    else if (hash.startsWith('#cheatsheet/')) showCheatsheet(hash.slice(12));
+  }
+  route();
+  window.addEventListener('hashchange', route);
 
   /* If an icon cannot load, fall back to the built-in open-licence glyph. */
   document.addEventListener('error', event => {
