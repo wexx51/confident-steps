@@ -938,3 +938,14 @@ html.high-contrast .tr-btn.danger:not(#_),html.high-contrast .tr-btn.safe:not(#_
 .kp-code{border:0;background:transparent;padding:0;border-radius:12px}.kp-stand{display:flex;flex-direction:column;align-items:center;gap:6px;background:#f14635;border-radius:12px;padding:10px 12px 8px;color:#fff;transform:rotate(-3deg)}.kp-stand b{font-size:14px}.kp-stand small{font-size:11px}.kp-stand svg{border-radius:6px}
 .kp-tabbtn span{font-size:10.5px}.kp-svc{font-size:11px;white-space:nowrap;min-width:0}.kp-svc span:last-child{max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .kp-svc>span:last-child{font-size:10.5px;letter-spacing:-.01em}
+/* large touch targets for 55+: every button and link at least 48px, the two card actions are real buttons */
+.task-card button[data-task]{margin-top:auto;justify-content:center;gap:12px;min-height:58px;padding:12px 16px;border:0;border-radius:10px;background:var(--teal);color:#fff;font-size:.9rem;font-weight:700;text-align:center}
+.task-card button[data-task]:hover{background:var(--teal-dark)}
+.task-card.completed button[data-task]{background:transparent;color:var(--ink);border:2px solid var(--teal)}
+.task-card button.cs-link{margin-top:10px;justify-content:center;min-height:52px;padding:10px 16px;border:2px solid var(--line);border-radius:10px;background:var(--paper);font-size:.85rem;font-weight:600;text-decoration:none}
+.task-card button.cs-link:hover{background:var(--soft);border-color:var(--teal)}
+.text-button{display:inline-flex;align-items:center;min-height:48px}
+.language-switch button{min-height:48px}.font-button{height:48px;min-width:52px}.os-switch button,.hint-button,.device-tabs button{min-height:52px}
+@media(max-width:760px){.task-card button[data-task]{font-size:1rem}.task-card button.cs-link{font-size:.95rem}}
+html.high-contrast .task-card button[data-task]:not(#_){background-color:#ffd400!important;color:#000!important;border-color:#ffd400!important}html.high-contrast .task-card button[data-task]:not(#_) *{color:#000!important;background-color:transparent!important}
+html.high-contrast .task-card button.cs-link:not(#_){color:#ffd400!important}
