@@ -82,6 +82,7 @@
   const curOs = () => state.device === 'phone' ? state.os : state.dos;
   function focusTitle(selector) { requestAnimationFrame(() => { $(selector)?.focus({preventScroll: true}); }); }
   function showView(view, scroll = true) {
+    if (view !== currentView) stopSpeaking();
     currentView = view;
     ['home', 'training', 'confidence', 'survey', 'chat'].forEach(name => { $('#' + name + '-view').hidden = name !== view; });
     if (scroll) window.scrollTo({top: 0, behavior: 'instant'});
@@ -525,11 +526,43 @@
   function osSwitch() {
     return `<div class="os-switch" role="group" aria-label="${state.device === 'phone' ? t('Phone model', 'Модель телефона') : t('Computer type', 'Тип компьютера')}">${osButtons('-train')}</div>`;
   }
+  /* ---------- read the step aloud (Web Speech API, works in the browser, nothing is sent) ---------- */
+  const speechOK = 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
+  let speaking = false;
+  function refreshSpeakButton() {
+    const button = $('[data-action="speak"]');
+    if (!button) return;
+    button.setAttribute('aria-pressed', String(speaking));
+    button.querySelector('.speak-label').textContent = speaking ? t('Stop reading', 'Остановить чтение') : t('Read aloud', 'Прочитать вслух');
+  }
+  function stopSpeaking() {
+    if (!speechOK) return;
+    speaking = false;
+    window.speechSynthesis.cancel();
+    refreshSpeakButton();
+  }
+  function speakStep() {
+    if (!speechOK || !active) return;
+    if (speaking) { stopSpeaking(); return; }
+    const meta = stepMeta(), lang = window.CSLocale.lang === 'ru' ? 'ru-RU' : 'en-US';
+    const text = [meta.title, meta.text, active.hint ? meta.hint : ''].map(plain).filter(Boolean).join('. ');
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = lang;
+    utterance.rate = 0.9;
+    const voice = window.speechSynthesis.getVoices().find(v => v.lang.replace('_', '-').startsWith(lang.slice(0, 2)));
+    if (voice) utterance.voice = voice;
+    utterance.onend = utterance.onerror = () => { speaking = false; refreshSpeakButton(); };
+    window.speechSynthesis.cancel();
+    speaking = true;
+    window.speechSynthesis.speak(utterance);
+    refreshSpeakButton();
+  }
   function renderTraining(focus = false) {
     if (!active) return;
+    stopSpeaking();
     const phone = state.device === 'phone';
     const task = getTask(active.id), meta = stepMeta(), ready = active.valid[active.step];
-    $('#training-view').innerHTML = `<button class="text-button back-link" data-action="practices">${t('← All exercises', '← Все практики')}</button><div class="training-header"><div><p class="eyebrow">${t('EXERCISE', 'ПРАКТИКА')} ${String(ids().indexOf(active.id) + 1).padStart(2, '0')} / ${String(ids().length).padStart(2, '0')}</p><h1 id="training-title" tabindex="-1">${task.title}</h1></div><span class="device-name">${deviceLabel()}</span></div><div class="training-layout"><div class="instruction-panel"><p class="step-count">${t(`STEP ${active.step + 1} OF 4`, `ШАГ ${active.step + 1} ИЗ 4`)}</p><div class="step-progress" role="progressbar" aria-label="${t('Completed steps', 'Пройденные шаги')}" aria-valuemin="0" aria-valuemax="4" aria-valuenow="${active.step}">${[0, 1, 2, 3].map(i => `<span${i < active.step ? ' class="done"' : ''}></span>`).join('')}</div><h2 id="step-title" tabindex="-1">${meta.title}</h2><p class="instruction-text">${meta.text}</p><button class="hint-button" data-action="hint" aria-expanded="${active.hint}" aria-controls="step-hint" data-testid="show-hint">? ${t('Hint', 'Подсказка')}</button> <button class="hint-button assist-open" data-action="assist" aria-expanded="${active.assist.open}" data-testid="ask-helper">${t('Stuck? Ask the helper', 'Не получается? Спросить помощника')}</button><div id="step-hint" class="hint-box"${active.hint ? '' : ' hidden'}>${meta.hint}</div><div id="assistant-slot">${assistHTML()}</div><div class="feedback ${active.tone}" id="step-feedback" role="status">${active.feedback ? active.feedback() : ''}</div><div class="training-nav"><button class="button secondary" data-action="previous" data-testid="previous-step">← ${t('Back', 'Назад')}</button><button class="button primary" data-action="next" data-testid="next-step"${ready ? '' : ' disabled'}>${active.step === 3 ? t('Finish', 'Завершить') : t('Next', 'Дальше')} <span aria-hidden="true">→</span></button><button class="text-button" data-action="restart" data-testid="restart-task">${t('Start again', 'Начать заново')}</button></div><p class="safe-note"><span aria-hidden="true">◇</span>${t('These are practice screens. You are not changing your device or sending real information.', 'Это учебные экраны. Вы не меняете устройство и не отправляете настоящие данные.')}</p></div><div class="simulator ${state.device}" data-testid="simulator"><div class="simulator-label"><span>${t('PRACTICE SCREEN', 'УЧЕБНЫЙ ЭКРАН')}</span>${osSwitch()}</div>${screen()}</div></div>`;
+    $('#training-view').innerHTML = `<button class="text-button back-link" data-action="practices">${t('← All exercises', '← Все практики')}</button><div class="training-header"><div><p class="eyebrow">${t('EXERCISE', 'ПРАКТИКА')} ${String(ids().indexOf(active.id) + 1).padStart(2, '0')} / ${String(ids().length).padStart(2, '0')}</p><h1 id="training-title" tabindex="-1">${task.title}</h1></div><span class="device-name">${deviceLabel()}</span></div><div class="training-layout"><div class="instruction-panel"><p class="step-count">${t(`STEP ${active.step + 1} OF 4`, `ШАГ ${active.step + 1} ИЗ 4`)}</p><div class="step-progress" role="progressbar" aria-label="${t('Completed steps', 'Пройденные шаги')}" aria-valuemin="0" aria-valuemax="4" aria-valuenow="${active.step}">${[0, 1, 2, 3].map(i => `<span${i < active.step ? ' class="done"' : ''}></span>`).join('')}</div><h2 id="step-title" tabindex="-1">${meta.title}</h2><p class="instruction-text">${meta.text}</p><button class="hint-button" data-action="hint" aria-expanded="${active.hint}" aria-controls="step-hint" data-testid="show-hint">? ${t('Hint', 'Подсказка')}</button>${speechOK ? ` <button class="hint-button speak-button" data-action="speak" aria-pressed="false" data-testid="read-aloud"><span aria-hidden="true">🔊</span> <span class="speak-label">${t('Read aloud', 'Прочитать вслух')}</span></button>` : ''} <button class="hint-button assist-open" data-action="assist" aria-expanded="${active.assist.open}" data-testid="ask-helper">${t('Stuck? Ask the helper', 'Не получается? Спросить помощника')}</button><div id="step-hint" class="hint-box"${active.hint ? '' : ' hidden'}>${meta.hint}</div><div id="assistant-slot">${assistHTML()}</div><div class="feedback ${active.tone}" id="step-feedback" role="status">${active.feedback ? active.feedback() : ''}</div><div class="training-nav"><button class="button secondary" data-action="previous" data-testid="previous-step">← ${t('Back', 'Назад')}</button><button class="button primary" data-action="next" data-testid="next-step"${ready ? '' : ' disabled'}>${active.step === 3 ? t('Finish', 'Завершить') : t('Next', 'Дальше')} <span aria-hidden="true">→</span></button><button class="text-button" data-action="restart" data-testid="restart-task">${t('Start again', 'Начать заново')}</button></div><p class="safe-note"><span aria-hidden="true">◇</span>${t('These are practice screens. You are not changing your device or sending real information.', 'Это учебные экраны. Вы не меняете устройство и не отправляете настоящие данные.')}</p></div><div class="simulator ${state.device}" data-testid="simulator"><div class="simulator-label"><span>${t('PRACTICE SCREEN', 'УЧЕБНЫЙ ЭКРАН')}</span>${osSwitch()}</div>${screen()}</div></div>`;
     if (ready && !(active.id === 'text' && active.step === 2)) {
       $('#training-view [data-sim="correct"]')?.classList.add('correct');
     }
@@ -601,6 +634,7 @@
     announce(t('Exercise complete. You can repeat it, choose the next one or rate your confidence.', 'Практика завершена. Можно повторить, выбрать следующую или отметить уверенность.'));
   }
   function renderCompletion(focus = false) {
+    stopSpeaking();
     const id = active.id;
     const next = ids().find(task => !state.progress[state.device].includes(task));
     $('#training-view').innerHTML = `<button class="text-button back-link" data-action="practices">${t('← All exercises', '← Все практики')}</button><div class="finish-panel"><div class="finish-check" aria-hidden="true">✓</div><p class="eyebrow">${t('EXERCISE COMPLETE', 'ПРАКТИКА ЗАВЕРШЕНА')} · ${deviceLabel().toUpperCase()}</p><h1 id="training-title" tabindex="-1">${t('You have taken another step.', 'У вас получился ещё один шаг.')}</h1><p>${t(`You completed “${getTask(id).title.toLowerCase()}”. You can repeat it as often as you like.`, `Вы прошли практику «${getTask(id).title.toLowerCase()}». Её можно повторить столько раз, сколько вам удобно.`)}</p><div class="takeaway">${getTask(id).takeaway}</div><div class="finish-actions">${next ? `<button class="button primary" data-task="${next}" data-testid="next-practice">${t('Next exercise', 'Следующая практика')} <span aria-hidden="true">→</span></button>` : `<button class="button primary" data-action="practices">${t('All exercises', 'Все практики')} <span aria-hidden="true">→</span></button>`}<button class="button secondary" data-action="confidence-after" data-testid="confidence-after">${t('Rate your confidence', 'Отметить уверенность')}</button><button class="text-button" data-task="${id}">${t('Repeat this exercise', 'Повторить эту практику')}</button></div>${id === 'message' ? `<div class="sc-offer"><strong>${t('Want more practice?', 'Хотите потренироваться ещё?')}</strong><p>${t('The helper can write a new made-up message for you to check.', 'Помощник придумает для вас новое учебное сообщение, а вы проверите его.')}</p><button class="button secondary" data-action="sc-new" data-testid="new-situation">${t('New situation from the helper', 'Новая ситуация от помощника')}</button></div>` : ''}<p class="mock-note">${t(`Completed ${state.progress[state.device].length} of ${ids().length} exercises for the ${state.device === 'phone' ? 'phone' : 'computer'}. This records completion; it does not measure your ability.`, `Пройдено ${state.progress[state.device].length} из ${ids().length} практик для ${state.device === 'phone' ? 'телефона' : 'компьютера'}. Это отметка прохождения, а не оценка способностей.`)}</p></div>`;
@@ -665,6 +699,7 @@
         refreshContrastLabel();
         announce(enabled ? t('High contrast is on.', 'Высокий контраст включён.') : t('Normal colours are on.', 'Обычные цвета включены.')); break;
       }
+      case 'speak': speakStep(); break;
       case 'hint': active.hint = !active.hint; $('#step-hint').hidden = !active.hint; button.setAttribute('aria-expanded', String(active.hint)); break;
       case 'previous': if (active.step > 0) { active.step--; active.feedback = null; active.tone = ''; active.hint = false; resetAssist(); renderTraining(true); } else home('practices'); break;
       case 'next': if (!active.valid[active.step]) return; if (active.step === 3) completeTask(); else { active.step++; active.feedback = null; active.tone = ''; active.hint = false; resetAssist(); renderTraining(true); } break;

@@ -779,3 +779,5 @@ html.high-contrast .confidence-scale label:has(input:checked),html.high-contrast
 html.high-contrast :is(button,a,input,select,textarea,[tabindex="-1"]):focus-visible{outline:4px solid #ffd400!important;outline-offset:4px}
 html.high-contrast .hero-art{transform:none}html.high-contrast .little-dot,html.high-contrast .zoom-track i{background-color:#ffd400!important}
 html.high-contrast .button.primary[disabled]:not(.phone-frame *) *{border:0!important}
+/* read aloud */
+.speak-button[aria-pressed=true]{background:var(--soft);border:2px solid var(--teal)}
