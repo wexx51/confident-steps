@@ -844,3 +844,39 @@ html.high-contrast .sum-track{background-color:#444!important}html.high-contrast
 .share-status{margin-top:12px;font-size:.9rem;line-height:1.6;padding:12px 14px;background:var(--soft);border-radius:8px}.share-status input{display:block;width:100%;margin-top:8px;font-size:.85rem;padding:10px 12px;border:2px solid #93a99b;border-radius:6px;background:var(--paper);color:var(--ink)}
 @media(max-width:760px){.invite-view{padding-block:28px 50px}.invite-card{padding:28px 20px}.invite-card h1{font-size:1.9rem}.share-row .button{width:100%}}
 .invite-icon{display:grid;width:72px}
+/* scam trainer: page */
+.trainer-banner{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-top:30px;padding:26px 30px;border-radius:14px;background:#17383f;color:#f3f1e7}.trainer-banner h3{font-size:1.35rem;margin:8px 0}.trainer-banner p{font-size:.85rem;color:#d5e0db;max-width:640px}.trainer-banner .eyebrow{color:#f0c96a}.trainer-banner .button{flex:none;background:#f0c96a;color:#17383f;min-height:58px}
+.trainer-view{padding-block:40px 70px}.tr-situation{font-size:1.05rem;line-height:1.6;padding:16px 18px;background:var(--soft);border-left:3px solid var(--teal);margin-bottom:22px}
+.tr-answers{display:grid;grid-template-columns:1fr 1fr;gap:12px}.tr-btn{min-height:72px;font-size:1.05rem!important;gap:10px!important;border:2px solid}.tr-btn.danger{background:#fbe9e5;border-color:#b3261e;color:#8c1d18}.tr-btn.safe{background:#e3f1e3;border-color:#2e7d32;color:#1b5e20}.tr-btn span{font-size:1.3rem}
+.trainer-view .feedback{font-size:.95rem}.tr-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.tr-tags span{font-size:.78rem;padding:4px 10px;border-radius:20px;background:rgba(255,255,255,.7);border:1px solid var(--line)}
+.trainer-view .step-progress{margin-top:0}.tr-signs{margin:8px 0 0;padding-left:1.2em;display:grid;gap:6px}
+html.high-contrast .tr-btn.danger:not(#_),html.high-contrast .tr-btn.safe:not(#_){border:3px solid #ffd400!important}html.high-contrast .trainer-banner .button{background-color:#ffd400!important;color:#000!important}
+@media(max-width:760px){.trainer-banner{display:block;padding:22px 20px}.trainer-banner .button{width:100%;margin-top:16px}.trainer-view{padding-block:27px 45px}.tr-answers{grid-template-columns:1fr}}
+/* scam trainer: links inside messages are shown, never clickable */
+.tr-link{color:#027eb5;text-decoration:underline;overflow-wrap:anywhere}.mx-tg .tr-link{color:#168acd}
+.tr-compose .mx-send{display:grid;place-items:center}.tr-compose.tg{background:#fff;display:flex;align-items:center;gap:8px;padding:6px 10px 26px;border-top:1px solid #e6e6e6}.tr-tg-input{flex:1;display:flex;align-items:center;gap:8px;color:#8a979f;font-size:15px}.tr-tg-input span{flex:1}
+/* SMS: iPhone Messages */
+.sm{flex:1;display:flex;flex-direction:column;background:#fff;min-height:0}
+.sm-ios .sm-head{display:grid;grid-template-columns:40px 1fr 40px;align-items:center;padding:6px 8px 8px;background:#f6f6f6;border-bottom:.5px solid #d1d1d6}.sm-ios .sm-who{display:flex;flex-direction:column;align-items:center;gap:3px}.sm-ios .sm-who small{font-size:11px;color:#000}
+.sm-body{flex:1;min-height:0;padding:12px;display:flex;flex-direction:column;gap:6px;overflow:hidden}.sm-day{text-align:center;font-size:11px;color:#8e8e93;margin-bottom:4px;line-height:1.35}
+.sm-ios .sm-b{align-self:flex-start;max-width:80%;background:#e9e9eb;color:#000;border-radius:18px;padding:8px 12px;font-size:15px;line-height:1.35}.sm-ios .sm-b .tr-link{color:#000}
+.sm-input{display:flex;align-items:center;gap:8px;padding:6px 10px 26px}.sm-ios .sm-plus{width:32px;height:32px;border-radius:50%;background:#e9e9eb;display:grid;place-items:center;flex:none}.sm-ios .sm-field{flex:1;border:1px solid #c7c7cc;border-radius:18px;padding:6px 12px;font-size:14px;color:#8e8e93}
+/* SMS: Google Messages on Android */
+.sm-and .sm-head{display:flex;align-items:center;gap:10px;padding:8px 10px;background:#fff}.sm-and .sm-head strong{flex:1;min-width:0;font-weight:400;font-size:17px;color:#1f1f1f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sm-icons{display:flex;gap:12px}
+.sm-and .sm-b{align-self:flex-start;max-width:82%;background:#e9eef6;color:#1f1f1f;border-radius:20px 20px 20px 6px;padding:10px 14px;font-size:15px;line-height:1.4}.sm-and .sm-b .tr-link{color:#0b57d0}.sm-note{font-size:11.5px;color:#5f6368;text-align:center;margin-top:8px}
+.sm-and .sm-plus{width:36px;height:36px;border-radius:50%;background:#d3e3fd;display:grid;place-items:center;flex:none}.sm-and .sm-field{flex:1;display:flex;align-items:center;justify-content:space-between;background:#e9eef6;border-radius:24px;padding:8px 14px;font-size:14.5px;color:#444746}.sm-mic{flex:none;display:grid;place-items:center}
+/* lock screen with a notification */
+.tr-lock{flex:1;display:flex;flex-direction:column;align-items:center;padding:14px 10px}.tr-date{font-size:15px;font-weight:600;opacity:.95}.tr-clock{font-size:76px;line-height:1;font-weight:600;letter-spacing:-2px;margin-bottom:28px}
+.tr-lock.and{align-items:flex-start;padding-left:18px}.tr-lock.and .tr-clock{font-size:64px;font-weight:400;order:-1;margin:6px 0 4px}.tr-lock.and .tr-date{font-weight:400;margin-bottom:24px;text-transform:none}
+.tr-note{display:flex;gap:10px;width:100%;padding:11px 12px;border-radius:20px;color:#000;text-align:left;align-self:stretch}.tr-lock.ios .tr-note{background:rgba(245,245,245,.78);backdrop-filter:blur(14px)}.tr-lock.and .tr-note{background:#fff;border-radius:24px;margin-right:8px;color:#1f1f1f}
+.tr-note-ic{flex:none;width:38px;height:38px;border-radius:9px;overflow:hidden}.tr-note-ic img{width:100%;height:100%;display:block}.tr-lock.and .tr-note-ic{width:30px;height:30px;border-radius:50%}
+.tr-note>div{flex:1;min-width:0;font-size:14px;line-height:1.35}.tr-note-top{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;color:#3c3c43}.tr-note-top strong{font-weight:600;text-transform:uppercase;letter-spacing:.02em;font-size:12px}.tr-lock.and .tr-note-top strong{text-transform:none;font-weight:500}.tr-note-t{display:block;font-weight:600}
+/* Telegram on iPhone: header and input as in the app */
+.mx-tg-head.ios .mx-back-label{display:flex;align-items:center;gap:0;color:#007aff;flex:none}.mx-back-label em{font-style:normal;font-size:16px}.mx-tg-head.ios .mx-ht{flex:1}
+.tr-compose.tg.ios{background:#f6f6f6;border-top:.5px solid #d1d1d6;gap:10px}.tr-tg-field{flex:1;background:#fff;border:1px solid #d1d1d6;border-radius:18px;padding:6px 12px;font-size:15px;color:#8e8e93}
+.tr-compose.wa-ios{background:#f6f6f6;border-top:.5px solid #d1d1d6;align-items:center;gap:12px;padding:6px 12px 26px}.tr-compose.wa-ios .mx-input{background:#fff;min-height:34px}
+.tr-lock.ios .tr-date{text-transform:none}.tr-lock.ios .tr-note-top{color:#000;font-size:14px}.tr-lock.ios .tr-note-top span{color:#3c3c43;font-size:12.5px;flex:none}
+.tr-lock.ios .tr-note-top strong{text-transform:none;letter-spacing:0;font-size:14px}
+/* phones: situation, then the message, then the answer buttons */
+@media(max-width:760px){.trainer-view .training-layout{display:flex;flex-direction:column}.trainer-view .instruction-panel{display:contents}.trainer-view .step-progress{order:0}.trainer-view .tr-situation{order:1;margin-bottom:0}.trainer-view .tr-sim{order:2}.trainer-view .tr-answers,.trainer-view #trainer-feedback{order:3}.trainer-view .training-nav{order:4;margin-top:0}.trainer-view .safe-note{order:5}}
+@media(max-width:760px){.trainer-view .training-layout{align-items:stretch}.trainer-view .instruction-panel>*{width:100%;align-self:stretch}}

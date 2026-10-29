@@ -84,7 +84,7 @@
   function showView(view, scroll = true) {
     if (view !== currentView) stopSpeaking();
     currentView = view;
-    ['home', 'training', 'confidence', 'survey', 'chat', 'cheatsheet', 'certificate', 'project', 'summary', 'invite'].forEach(name => { $('#' + name + '-view').hidden = name !== view; });
+    ['home', 'training', 'confidence', 'survey', 'chat', 'cheatsheet', 'certificate', 'project', 'summary', 'invite', 'trainer'].forEach(name => { $('#' + name + '-view').hidden = name !== view; });
     if (scroll) window.scrollTo({top: 0, behavior: 'instant'});
   }
   function home(section) {
@@ -735,6 +735,31 @@
     showView('invite');
     renderInvite(true);
   }
+  /* ---------- scam trainer: 10 messages, safe or a scam ---------- */
+  let trainer = null;
+  const trainerItems = () => { PH.os = state.os; return window.CSTrainerFactory({t, PH, kit: lessons().kit}); };
+  function renderTrainer(focus = false) {
+    const items = trainerItems(), total = items.length, back = `<button class="text-button back-link" data-action="practices">${t('← All exercises', '← Все практики')}</button>`;
+    if (trainer.i >= total) {
+      const score = trainer.answers.filter(Boolean).length;
+      const verdict = score === total ? t('Excellent! You spotted every one.', 'Отлично! Вы не ошиблись ни разу.') : score >= 7 ? t('Very good. Look again at the messages where you hesitated.', 'Очень хорошо. Посмотрите ещё раз на сообщения, где вы сомневались.') : t('Scammers are inventive; practice helps. Try the trainer again.', 'Мошенники изобретательны, и практика помогает. Попробуйте тренажёр ещё раз.');
+      $('#trainer-view').innerHTML = `${back}<div class="finish-panel"><div class="finish-check" aria-hidden="true">✓</div><p class="eyebrow">${t('SCAM TRAINER · RESULT', 'ТРЕНАЖЁР · ИТОГ')}</p><h1 id="trainer-title" tabindex="-1">${t(`${score} of ${total} answers are right`, `Верных ответов: ${score} из ${total}`)}</h1><p>${verdict}</p><div class="takeaway"><strong>${t('Signs of a scam', 'Признаки мошенников')}</strong><ul class="tr-signs">${[t('They rush you: “today”, “30 minutes”, “before 18:00”.', 'Торопят: «сегодня», «30 минут», «до 18:00».'), t('A link to an unfamiliar website instead of the official app.', 'Ссылка на незнакомый сайт вместо официального приложения.'), t('They ask for a code from SMS, a card number or a PIN.', 'Просят код из SMS, номер карты или PIN-код.'), t('A “bank” or “support” writes in WhatsApp or Telegram.', '«Банк» или «поддержка» пишет в WhatsApp или Telegram.'), t('A relative “with a new number” urgently needs money.', '«Родственнику с нового номера» срочно нужны деньги.'), t('Unexpected money, prizes or payments.', 'Неожиданные деньги, призы, выплаты.')].map(x => `<li>${x}</li>`).join('')}</ul></div><p>${t('If in doubt: stop, do not open the link, and call the bank or the person yourself on a number you know.', 'Если сомневаетесь: остановитесь, не открывайте ссылку и сами позвоните в банк или близкому по известному вам номеру.')}</p><div class="finish-actions"><button class="button primary" data-action="trainer" data-testid="trainer-again">${t('Try again', 'Пройти ещё раз')}</button><button class="button secondary" data-action="practices">${t('All exercises', 'Все практики')}</button></div></div>`;
+      if (focus) { window.scrollTo({top: 0, behavior: 'instant'}); focusTitle('#trainer-title'); }
+      return;
+    }
+    const item = items[trainer.i], picked = trainer.picked;
+    const right = picked !== null && picked === item.scam;
+    const answer = picked === null
+      ? `<div class="tr-answers"><button class="button tr-btn danger" data-action="trainer-answer" data-v="scam" data-testid="trainer-scam"><span aria-hidden="true">⚠</span> ${t('It’s a scam', 'Это мошенники')}</button><button class="button tr-btn safe" data-action="trainer-answer" data-v="safe" data-testid="trainer-safe"><span aria-hidden="true">✓</span> ${t('It’s safe', 'Всё в порядке')}</button></div>`
+      : `<div class="feedback ${right ? 'success' : 'retry'}" role="status" id="trainer-feedback"><strong>${right ? t('Right!', 'Верно!') : t('Not quite.', 'Не совсем.')}</strong> ${t(...item.why)}<p class="tr-tags">${item.signs.map(x => `<span>${t(...x)}</span>`).join('')}</p></div><div class="training-nav"><button class="button primary" data-action="trainer-next" data-testid="trainer-next">${trainer.i === total - 1 ? t('See the result', 'Посмотреть итог') : t('Next message', 'Следующее сообщение')} <span aria-hidden="true">→</span></button></div>`;
+    $('#trainer-view').innerHTML = `${back}<div class="training-header"><div><p class="eyebrow">${t('SCAM TRAINER', 'ТРЕНАЖЁР')} · ${t(`MESSAGE ${trainer.i + 1} OF ${total}`, `СООБЩЕНИЕ ${trainer.i + 1} ИЗ ${total}`)}</p><h1 id="trainer-title" tabindex="-1">${t('Safe or a scam?', 'Безопасно или мошенники?')}</h1></div><span class="device-name">${item.kind}</span></div><div class="training-layout"><div class="instruction-panel"><div class="step-progress" aria-hidden="true">${items.map((_, i) => `<span${i < trainer.i ? ' class="done"' : ''}></span>`).join('')}</div>${item.situation ? `<p class="tr-situation"><strong>${t('Situation:', 'Ситуация:')}</strong> ${t(...item.situation)}</p>` : `<p class="tr-situation">${t('This message has just arrived. Read it on the phone screen.', 'Это сообщение только что пришло. Прочитайте его на экране телефона.')}</p>`}${answer}<p class="safe-note"><span aria-hidden="true">◇</span>${t('All messages are made up. Names, numbers and websites are examples, and nothing on the screen can be opened.', 'Все сообщения выдуманы. Имена, номера и сайты — примеры, на экране ничего не открывается.')}</p></div><div class="simulator phone tr-sim" data-testid="trainer-phone"><div class="simulator-label"><span>${t('PRACTICE SCREEN', 'УЧЕБНЫЙ ЭКРАН')}</span><div class="os-switch" role="group" aria-label="${t('Phone model', 'Модель телефона')}">${[['ios', 'iPhone'], ['android', 'Android']].map(([v, l]) => `<button type="button" data-os="${v}" aria-pressed="${state.os === v}" data-testid="os-${v}-trainer">${l}</button>`).join('')}</div></div>${item.view()}</div></div>`;
+    if (focus) focusTitle(picked === null ? '#trainer-title' : '#trainer-feedback');
+  }
+  function showTrainer() {
+    trainer = {i: 0, answers: [], picked: null};
+    showView('trainer');
+    renderTrainer(true);
+  }
   function completeTask() {
     const id = active.id;
     if (!state.progress[state.device].includes(id)) state.progress[state.device].push(id);
@@ -795,10 +820,11 @@
   function showSummary() { showView('summary'); renderSummary(true); }
   function showSurvey() { showView('survey'); focusTitle('#survey-title'); }
   function setOs(value) {
-    if (!['ios', 'android', 'windows', 'mac'].includes(value) || value === curOs()) return;
+    if (!['ios', 'android', 'windows', 'mac'].includes(value) || value === (['ios', 'android'].includes(value) ? state.os : state.dos)) return;
     if (value === 'windows' || value === 'mac') state.dos = value; else state.os = value;
     persist();
     renderCards();
+    if (currentView === 'trainer' && trainer) renderTrainer();
     if (currentView === 'training' && active && !active.completed) {
       renderTraining();
       requestAnimationFrame(() => $(`#training-view [data-os="${value}"]`)?.focus({preventScroll: true}));
@@ -839,6 +865,9 @@
       case 'cheatsheet': showCheatsheet(button.dataset.id); break;
       case 'print': window.print(); break;
       case 'share': shareLesson(button.dataset.id); break;
+      case 'trainer': showTrainer(); break;
+      case 'trainer-answer': if (trainer && trainer.picked === null) { trainer.picked = button.dataset.v === 'scam'; trainer.answers[trainer.i] = trainer.picked === trainerItems()[trainer.i].scam; renderTrainer(true); } break;
+      case 'trainer-next': if (trainer) { trainer.i++; trainer.picked = null; renderTrainer(true); window.scrollTo({top: 0, behavior: 'instant'}); } break;
       case 'certificate': if (active) showCertificate(active.id); break;
       case 'certificate-back': showView('training'); renderCompletion(true); break;
       case 'hint': active.hint = !active.hint; $('#step-hint').hidden = !active.hint; button.setAttribute('aria-expanded', String(active.hint)); markTarget(); break;
@@ -966,6 +995,8 @@
       const keep = $('#chat-q') ? $('#chat-q').value : ''; renderChat(); if ($('#chat-q')) $('#chat-q').value = keep;
     } else if (currentView === 'certificate' && certificate) {
       renderCertificate();
+    } else if (currentView === 'trainer' && trainer) {
+      renderTrainer();
     } else if (currentView === 'invite') {
       renderInvite();
     } else if (currentView === 'summary') {
@@ -985,10 +1016,10 @@
   renderCards();
   refreshFontLabel();
   refreshContrastLabel();
-  /* direct links: #survey, #project, #summary, #practices, #about, #cheatsheet/<lesson>, #lesson/<lesson>/<os> */
+  /* direct links: #survey, #project, #summary, #trainer, #practices, #about, #cheatsheet/<lesson>, #lesson/<lesson>/<os> */
   function route() {
     const hash = location.hash;
-    if (hash === '#survey') showSurvey(); else if (hash === '#project') showProject(); else if (hash === '#summary') showSummary(); else if (hash === '#practices') home('practices'); else if (hash === '#about') home('about');
+    if (hash === '#survey') showSurvey(); else if (hash === '#project') showProject(); else if (hash === '#summary') showSummary(); else if (hash === '#trainer') showTrainer(); else if (hash === '#practices') home('practices'); else if (hash === '#about') home('about');
     else if (hash.startsWith('#cheatsheet/')) showCheatsheet(hash.slice(12));
     else if (hash.startsWith('#lesson/')) { const [id, os] = hash.slice(8).split('/'); showInvite(id, os); }
   }

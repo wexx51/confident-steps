@@ -161,6 +161,10 @@
     s203: ['About the project', 'О проекте'],
     s204: ['About the project ↗', 'О проекте ↗'],
     s205: ['Before and after ', 'До и после '],
+    s206: ['NEW · SCAM TRAINER', 'НОВОЕ · ТРЕНАЖЁР'],
+    s207: ['Spot the scammer: 10 messages', 'Распознай мошенника: 10 сообщений'],
+    s208: ['SMS, WhatsApp, Telegram and notifications, as they look on a phone. Decide for each one: safe or a scam.', 'SMS, WhatsApp, Telegram и уведомления — как на телефоне. Про каждое решите: безопасно или мошенники.'],
+    s209: ['Start the trainer', 'Начать тренажёр'],
     s153: ['Which phone do you have?', 'Какой у вас телефон?'],
     s154: ['Phone model', 'Модель телефона'],
     s155: ['The practice screens will look like your phone.', 'Учебные экраны будут выглядеть как на вашем телефоне.']

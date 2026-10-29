@@ -78,6 +78,8 @@ window.CSLessonsFactory = H => {
   /* chat header: app = wa|tg */
   const chatHead = (app, name, sub, a, right) => {
     const ios = isIos();
+    /* Telegram on iPhone: “‹ Chats” on the left, the name in the middle, the picture on the right */
+    if (ios && app === 'tg') return `<div class="mx-head mx-tg-head ios"><span class="mx-hb mx-back-label">${g('chev', 'currentColor', 24)}<em>${t('Chats', 'Чаты')}</em></span><span class="mx-ht"><strong>${name}</strong><small>${sub}</small></span>${a}</div>`;
     return `<div class="mx-head mx-${app}-head${ios ? ' ios' : ''}">${ios ? `<span class="mx-hb">${g('chev', 'currentColor', 24)}</span>` : `<span class="mx-hb">${g('back')}</span>`}${a}<span class="mx-ht"><strong>${name}</strong><small>${sub}</small></span><span class="mx-hi">${right}</span></div>`;
   };
   const msg = (txt, out, time, app, extra = '') => `<div class="mx-b ${out ? 'out' : 'in'}">${txt}<span class="mx-bt">${extra}${time}${out ? ` <i class="mx-ticks">✓✓</i>` : ''}</span></div>`;
@@ -108,6 +110,8 @@ window.CSLessonsFactory = H => {
   const chatRow = (a, name, last, time, unread, wrong, cls = '') => act(`${a}<span class="mx-rt"><span class="mx-r1"><strong>${name}</strong><time class="${unread ? 'u' : ''}">${time}</time></span><span class="mx-r2"><small>${last}</small>${unread ? `<em>${unread}</em>` : ''}</span></span>`, wrong, 'mx-row ' + cls);
 
   return {
+    /* shared screen parts, used by the scam trainer (trainer.js) */
+    kit: {g, ava, chatHead, msg, day, shell, isIos, logo, verified},
     egov: {
       icon: 'eG', title: t('Get a certificate in eGov', 'Получить справку в eGov'),
       description: t('Open the official app, log in safely and find a service.', 'Открыть официальное приложение, безопасно войти и найти услугу.'),
