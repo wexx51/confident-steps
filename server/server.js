@@ -24,7 +24,19 @@ const ORIGIN = process.env.ALLOWED_ORIGIN || '';
 const RATE = Number(process.env.RATE_PER_MIN) || 12;
 const DAILY = Number(process.env.DAILY_LIMIT) || 500;
 const PUBLIC = path.join(__dirname, '..', 'public');
-const MIME = {'.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.md': 'text/markdown; charset=utf-8', '.json': 'application/json'};
+const MIME = {'.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.md': 'text/markdown; charset=utf-8', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.svg': 'image/svg+xml'};
+
+/* offline support: sw.js gets the list of site files and a hash of their contents, so every deploy refreshes the saved copy */
+function siteFiles(dir = PUBLIC) {
+  return fs.readdirSync(dir, {withFileTypes: true}).flatMap(e => e.name.startsWith('.') ? [] : e.isDirectory() ? siteFiles(path.join(dir, e.name)) : [path.join(dir, e.name)]);
+}
+const OFFLINE = (() => {
+  const files = siteFiles().filter(f => !f.endsWith('sw.js')).sort();
+  const hash = require('crypto').createHash('sha1');
+  files.forEach(f => { hash.update(f); hash.update(fs.readFileSync(f)); });
+  const urls = ['/', ...files.map(f => '/' + path.relative(PUBLIC, f).split(path.sep).join('/'))];
+  return {version: hash.digest('hex').slice(0, 12), urls};
+})();
 
 const hits = new Map();
 let day = new Date().toDateString(), dayCount = 0;
@@ -101,6 +113,11 @@ http.createServer((req, res) => {
     if (req.method === 'OPTIONS') return send(res, 204, '');
     if (req.method === 'POST') return handleAI(req, res);
     return send(res, 405, {error: 'POST only'});
+  }
+  if (url.pathname === '/sw.js') {
+    const code = fs.readFileSync(path.join(PUBLIC, 'sw.js'), 'utf8').replace('__VERSION__', OFFLINE.version).replace('__FILES__', JSON.stringify(OFFLINE.urls));
+    res.writeHead(200, {'Content-Type': MIME['.js'], 'Cache-Control': 'no-cache'});
+    return res.end(code);
   }
   let file = path.normalize(path.join(PUBLIC, url.pathname === '/' ? 'index.html' : decodeURIComponent(url.pathname)));
   if (!file.startsWith(PUBLIC)) return send(res, 403, {error: 'forbidden'});

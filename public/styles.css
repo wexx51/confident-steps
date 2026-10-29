@@ -949,3 +949,7 @@ html.high-contrast .tr-btn.danger:not(#_),html.high-contrast .tr-btn.safe:not(#_
 @media(max-width:760px){.task-card button[data-task]{font-size:1rem}.task-card button.cs-link{font-size:.95rem}}
 html.high-contrast .task-card button[data-task]:not(#_){background-color:#ffd400!important;color:#000!important;border-color:#ffd400!important}html.high-contrast .task-card button[data-task]:not(#_) *{color:#000!important;background-color:transparent!important}
 html.high-contrast .task-card button.cs-link:not(#_){color:#ffd400!important}
+/* offline notice and install instructions */
+.offline-note{margin:0;padding:12px 18px;background:#f3e9d6;border-bottom:2px solid #b16b13;color:#4a2f06;font-size:.9rem;text-align:center;font-weight:600}
+html.high-contrast .offline-note{border-color:#ffd400}
+.install-block{grid-column:1/-1;margin-top:20px}.install-block .button{margin:10px 0 6px;min-height:56px}.install-steps{margin:6px 0 8px;padding-left:1.4em;display:grid;gap:8px;font-size:.95rem;line-height:1.55}

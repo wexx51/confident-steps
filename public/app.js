@@ -692,9 +692,31 @@
       t('◐ turns on high contrast: black background, white text, yellow buttons.', 'Кнопка ◐ включает высокий контраст: чёрный фон, белый текст, жёлтые кнопки.'),
       t('“Read aloud” in each step uses the voice built into your browser.', 'Кнопка «Прочитать вслух» в каждом шаге использует голос, встроенный в ваш браузер.')
     ])}</div>
-<p class="project-foot">${t('Sources of the app icons are listed in', 'Источники значков приложений перечислены в файле')} <a href="ICON_SOURCES.md" target="_blank" rel="noopener">ICON_SOURCES.md</a>.</p>`;
+${installHTML()}<p class="project-foot">${t('Sources of the app icons are listed in', 'Источники значков приложений перечислены в файле')} <a href="ICON_SOURCES.md" target="_blank" rel="noopener">ICON_SOURCES.md</a>.</p>`;
     if (focus) focusTitle('#project-title');
   }
+  /* ---------- install on the phone and work offline ---------- */
+  let installPrompt = null;
+  const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const appleDevice = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  function installHTML() {
+    let body;
+    if (standalone()) body = `<p>${t('The site is already installed on this device. You can open it from the home screen, even without the internet.', 'Сайт уже установлен на это устройство. Его можно открывать с главного экрана, даже без интернета.')}</p>`;
+    else if (installPrompt) body = `<p>${t('Add the site to your home screen like an app. Exercises will then open even without the internet.', 'Добавьте сайт на главный экран, как приложение. Тогда практики будут открываться даже без интернета.')}</p><button class="button primary" data-action="install" data-testid="install-app">${t('Install on this device', 'Установить на это устройство')}</button>`;
+    else if (appleDevice()) body = `<ol class="install-steps"><li>${t('Open this site in Safari.', 'Откройте этот сайт в Safari.')}</li><li>${t('Tap the Share button (a square with an arrow up) at the bottom of the screen.', 'Нажмите кнопку «Поделиться» (квадрат со стрелкой вверх) внизу экрана.')}</li><li>${t('Choose “Add to Home Screen”, then “Add”.', 'Выберите «На экран „Домой“», затем «Добавить».')}</li></ol>`;
+    else body = `<ol class="install-steps"><li>${t('Open the browser menu (three dots ⋮ in the corner).', 'Откройте меню браузера (три точки ⋮ в углу).')}</li><li>${t('Choose “Install app” or “Add to Home screen”.', 'Выберите «Установить приложение» или «Добавить на главный экран».')}</li></ol>`;
+    return `<section class="project-block install-block" id="install-block"><h2>${t('Install on your phone', 'Установить на телефон')}</h2>${body}<p class="small">${t('After the first visit, exercises, cheat sheets and the trainer work without the internet. The AI helper needs the internet.', 'После первого открытия практики, шпаргалки и тренажёр работают без интернета. ИИ-помощнику интернет нужен.')}</p></section>`;
+  }
+  function refreshOffline() {
+    const note = $('#offline-note');
+    note.hidden = navigator.onLine;
+    note.textContent = navigator.onLine ? '' : t('No internet connection. Exercises still work; the AI helper will answer with ready-made hints.', 'Нет подключения к интернету. Практики работают, а ИИ-помощник ответит заготовленными подсказками.');
+  }
+  window.addEventListener('online', refreshOffline);
+  window.addEventListener('offline', refreshOffline);
+  window.addEventListener('beforeinstallprompt', event => { event.preventDefault(); installPrompt = event; if (currentView === 'project') renderProject(); });
+  window.addEventListener('appinstalled', () => { installPrompt = null; if (currentView === 'project') renderProject(); });
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => { /* the site works without it */ });
   function showProject() { showView('project'); renderProject(true); }
   /* ---------- “grandchild mode”: a link straight to one exercise, e.g. #lesson/whatsapp/ios ---------- */
   let inviteId = null;
@@ -865,6 +887,7 @@
       case 'speak': speakStep(); break;
       case 'cheatsheet': showCheatsheet(button.dataset.id); break;
       case 'print': window.print(); break;
+      case 'install': if (installPrompt) { installPrompt.prompt(); installPrompt.userChoice.finally(() => { installPrompt = null; if (currentView === 'project') renderProject(); }); } break;
       case 'share': shareLesson(button.dataset.id); break;
       case 'trainer': showTrainer(); break;
       case 'trainer-answer': if (trainer && trainer.picked === null) { trainer.picked = button.dataset.v === 'scam'; trainer.answers[trainer.i] = trainer.picked === trainerItems()[trainer.i].scam; renderTrainer(true); } break;
@@ -1013,10 +1036,12 @@
     refreshStatuses();
     refreshFontLabel();
     refreshContrastLabel();
+    refreshOffline();
   });
   renderCards();
   refreshFontLabel();
   refreshContrastLabel();
+  refreshOffline();
   /* direct links: #survey, #project, #summary, #trainer, #practices, #about, #cheatsheet/<lesson>, #lesson/<lesson>/<os> */
   function route() {
     const hash = location.hash;
