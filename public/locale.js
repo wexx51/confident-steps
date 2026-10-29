@@ -160,6 +160,7 @@
     s202: ['High contrast', 'Высокий контраст'],
     s203: ['About the project', 'О проекте'],
     s204: ['About the project ↗', 'О проекте ↗'],
+    s205: ['Before and after ', 'До и после '],
     s153: ['Which phone do you have?', 'Какой у вас телефон?'],
     s154: ['Phone model', 'Модель телефона'],
     s155: ['The practice screens will look like your phone.', 'Учебные экраны будут выглядеть как на вашем телефоне.']

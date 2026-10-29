@@ -84,7 +84,7 @@
   function showView(view, scroll = true) {
     if (view !== currentView) stopSpeaking();
     currentView = view;
-    ['home', 'training', 'confidence', 'survey', 'chat', 'cheatsheet', 'certificate', 'project'].forEach(name => { $('#' + name + '-view').hidden = name !== view; });
+    ['home', 'training', 'confidence', 'survey', 'chat', 'cheatsheet', 'certificate', 'project', 'summary'].forEach(name => { $('#' + name + '-view').hidden = name !== view; });
     if (scroll) window.scrollTo({top: 0, behavior: 'instant'});
   }
   function home(section) {
@@ -714,6 +714,31 @@
       });
     } else { showView('confidence'); focusTitle('#confidence-title'); }
   }
+  /* ---------- before and after: how confidence changed, per device ---------- */
+  function steps(n) {
+    if (window.CSLocale.lang !== 'ru') return n === 1 ? '1 step' : n + ' steps';
+    return n + (n === 1 ? ' ступень' : ' ступени');
+  }
+  function renderSummary(focus = false) {
+    const labels = getLabels();
+    const bar = (phase, value) => `<div class="sum-row"><span class="sum-phase">${phase}</span><div class="sum-track" aria-hidden="true"><i style="width:${value * 20}%"></i></div><span class="sum-val"><strong>${value} ${t('of 5', 'из 5')}</strong> ${labels[value - 1].toLowerCase()}</span></div>`;
+    const cards = ['phone', 'computer'].map(device => {
+      const r = state.ratings[device], done = state.progress[device].length;
+      const name = device === 'phone' ? t('Phone', 'Телефон') : t('Computer', 'Компьютер');
+      if (!r.before && !r.after) return '';
+      let verdict = '';
+      if (r.before && r.after) {
+        const diff = r.after - r.before;
+        verdict = diff > 0 ? t(`Your confidence grew by ${steps(diff)}. Well done: this is the result of your own practice.`, `Ваша уверенность выросла на ${steps(diff)}. Это результат вашей собственной практики.`)
+          : diff === 0 ? t('Your confidence stayed the same. That is normal: skills settle with repetition.', 'Уверенность осталась на прежнем уровне. Это нормально: навык закрепляется с повторением.')
+          : t('Today you feel a little less sure. That often happens when you try something new. Repeat an exercise at your own pace.', 'Сегодня уверенности чуть меньше. Так часто бывает, когда пробуешь новое. Повторите практику в своём темпе.');
+      }
+      return `<section class="sum-card" data-testid="summary-${device}"><h2>${name}</h2>${r.before ? bar(t('Before', 'До'), r.before) : ''}${r.after ? bar(t('After', 'После'), r.after) : `<p class="small">${t('Rate your confidence after an exercise to see the change.', 'Отметьте уверенность после практики, чтобы увидеть изменение.')}</p>`}${verdict ? `<p class="sum-verdict">${verdict}</p>` : ''}<p class="small">${t(`Exercises completed: ${done}.`, `Пройдено практик: ${done}.`)}</p></section>`;
+    }).join('');
+    $('#summary-view').innerHTML = `<button class="text-button back-link" data-action="practices">${t('← All exercises', '← Все практики')}</button><p class="eyebrow">${t('BEFORE AND AFTER', 'ДО И ПОСЛЕ')}</p><h1 id="summary-title" tabindex="-1">${t('How your confidence has changed', 'Как изменилась ваша уверенность')}</h1><p class="intro">${t('Your own ratings from 1 to 5. This is not a test score; it only shows how you feel.', 'Ваши собственные отметки от 1 до 5. Это не оценка, а только ваше ощущение.')}</p>${cards || `<p class="sum-empty">${t('There are no ratings yet. Rate your confidence before and after an exercise.', 'Отметок пока нет. Отметьте уверенность до и после практики.')}</p>`}<div class="confidence-actions"><button class="button primary" data-action="practices">${t('Continue practising', 'Продолжить практику')}</button><button class="button secondary" data-action="confidence">${t('Change my ratings', 'Изменить отметки')}</button></div>${state.save ? '' : `<p class="small">${t('Ratings are kept until you reload the page. To keep them, turn on saving on the home page.', 'Отметки хранятся до перезагрузки страницы. Чтобы они сохранились, включите сохранение на главной странице.')}</p>`}`;
+    if (focus) focusTitle('#summary-title');
+  }
+  function showSummary() { showView('summary'); renderSummary(true); }
   function showSurvey() { showView('survey'); focusTitle('#survey-title'); }
   function setOs(value) {
     if (!['ios', 'android', 'windows', 'mac'].includes(value) || value === curOs()) return;
@@ -773,6 +798,7 @@
       case 'sc-exit': scenario = null; if (active && active.completed) renderCompletion(true); else home('practices'); break;
       case 'sc-answer': { const said = button.dataset.v === 'danger'; scenario.answered = said; scenarioStats.n++; if (said === scenario.data.suspicious) scenarioStats.ok++; renderScenario(true); break; }
       case 'confidence': showConfidence(); break;
+      case 'summary': showSummary(); break;
       case 'confidence-after': showConfidence('after'); break;
       case 'skip-confidence': { const task = confidenceContext?.task; if (task) beginTask(task, true); else home('practices'); break; }
       case 'erase': {
@@ -829,7 +855,9 @@
     if (!selected.length) { setLocalizedStatus('confidence-status', () => t('Choose a rating or select “Skip”.', 'Выберите отметку или нажмите «Пропустить».')); return; }
     selected.forEach(input => { state.ratings[state.device][input.name] = Number(input.value); }); persist();
     const task = confidenceContext?.task;
-    if (task) beginTask(task, true); else { home('practices'); announce(t('Your confidence rating has been saved.', 'Ваша отметка уверенности сохранена.')); }
+    if (task) beginTask(task, true);
+    else if (state.ratings[state.device].after) showSummary();
+    else { home('practices'); announce(t('Your confidence rating has been saved.', 'Ваша отметка уверенности сохранена.')); }
   });
   function refreshAgeNote() {
     const age = $('#survey-form input[name="age"]:checked')?.value;
@@ -882,6 +910,8 @@
       const keep = $('#chat-q') ? $('#chat-q').value : ''; renderChat(); if ($('#chat-q')) $('#chat-q').value = keep;
     } else if (currentView === 'certificate' && certificate) {
       renderCertificate();
+    } else if (currentView === 'summary') {
+      renderSummary();
     } else if (currentView === 'project') {
       renderProject();
     } else if (currentView === 'cheatsheet') {
@@ -897,10 +927,10 @@
   renderCards();
   refreshFontLabel();
   refreshContrastLabel();
-  /* direct links: #survey, #project, #practices, #about, #cheatsheet/<lesson> */
+  /* direct links: #survey, #project, #summary, #practices, #about, #cheatsheet/<lesson> */
   function route() {
     const hash = location.hash;
-    if (hash === '#survey') showSurvey(); else if (hash === '#project') showProject(); else if (hash === '#practices') home('practices'); else if (hash === '#about') home('about');
+    if (hash === '#survey') showSurvey(); else if (hash === '#project') showProject(); else if (hash === '#summary') showSummary(); else if (hash === '#practices') home('practices'); else if (hash === '#about') home('about');
     else if (hash.startsWith('#cheatsheet/')) showCheatsheet(hash.slice(12));
   }
   route();
