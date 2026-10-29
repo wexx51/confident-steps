@@ -966,3 +966,12 @@ html.high-contrast .offline-note{border-color:#ffd400}
 @media(max-width:760px){.stats-view{padding-block:27px 45px}.stats-view h1{font-size:2rem}.st-grid{grid-template-columns:1fr}.st-card{padding:18px 14px}.st-vbars{height:160px}.st-vcol b{font-size:.6rem}.st-table th,.st-table td{padding:9px 5px;font-size:.85rem}.st-rate{width:36px}}
 html.high-contrast :is(.st-track,.st-rate){background-color:#444!important}html.high-contrast :is(.st-track i,.st-rate i,.st-vcol i){background-color:#ffd400!important}
 @media(max-width:760px){.st-rate{display:none}}
+/* long Kazakh words must wrap instead of widening the exercise cards */
+.task-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.task-card h3,.task-card p{overflow-wrap:anywhere;hyphens:auto}
+@media(max-width:1100px){.task-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:420px){.task-grid{grid-template-columns:minmax(0,1fr)}}
+/* five menu links and three languages do not fit beside the logo: the menu always gets its own row */
+@media(min-width:1001px){.header-inner{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px 20px;padding-block:16px}.site-header nav{grid-column:1/-1;grid-row:2;margin-left:0;justify-content:space-between;border-top:1px solid var(--line);padding-top:7px;width:100%}.header-tools{justify-self:end}.brand{min-width:0}}
+/* long app names (Kazakh “Параметрлер”, Kaspi tiles) wrap to a second line as phones do, instead of being cut */
+.app-label{max-width:68px;white-space:normal;overflow-wrap:anywhere;text-align:center;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.kp-svc{white-space:normal}.kp-svc>span:last-child{white-space:normal;text-align:center;line-height:1.15;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;min-height:2.3em}
+.app-label,.kp-svc>span:last-child{overflow-wrap:normal;word-break:normal;hyphens:manual}

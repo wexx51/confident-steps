@@ -45,7 +45,7 @@
 
   const RULES = lang => `You are a patient helper on a practice website for adults aged 55+ in Kazakhstan who are learning everyday smartphone and computer skills. Everything on the practice screen is SIMULATED and safe.
 Rules:
-- Write in ${lang === 'ru' ? 'Russian' : 'English'}, in plain everyday words, at most 3 short sentences, no markdown, no lists.
+- Write in ${LANG_NAME[lang] || 'English'}, in plain everyday words, at most 3 short sentences, no markdown, no lists.
 - Be calm and encouraging. Never blame the person. A mistake is normal.
 - Use only the screen facts given below. Never invent menu names, buttons or paths. If the real phone may look different, say that names can differ between phones.
 - Never ask for, and never accept, real passwords, SMS codes, card numbers or personal data. If the person offers any, tell them kindly not to share it.
@@ -75,16 +75,15 @@ ${c.image ? 'A screenshot of the person\'s own real screen is attached. Compare 
       const text = (await ask(prompt, {image: c.image})).trim();
       if (text) return {text, ai: true};
     } catch (_) { /* fall through to ready-made help */ }
-    if (c.image) return {text: c.lang === 'ru' ? 'Скриншоты разбирает ИИ, а сейчас он не подключён. Опишите словами, что на экране, или воспользуйтесь подсказкой.' : 'The AI reads screenshots, but it is not connected right now. Describe the screen in words or use the hint.', ai: false};
+    if (c.image) return {text: L(c.lang, 'The AI reads screenshots, but it is not connected right now. Describe the screen in words or use the hint.', 'Скриншоты разбирает ИИ, а сейчас он не подключён. Опишите словами, что на экране, или воспользуйтесь подсказкой.', 'Скриншоттарды ЖИ талдайды, бірақ қазір ол қосылмаған. Экранда не тұрғанын сөзбен сипаттаңыз немесе кеңесті пайдаланыңыз.'), ai: false};
     return {text: fallbackExplain(c), ai: false};
   }
   function fallbackExplain(c) {
-    const ru = c.lang === 'ru';
-    if (c.kind === 'correction' && c.mistake) return `${c.mistake} ${ru ? 'Ничего страшного, это учебный экран.' : 'That is fine, this is a practice screen.'} ${c.instruction}`;
+    if (c.kind === 'correction' && c.mistake) return `${c.mistake} ${L(c.lang, 'That is fine, this is a practice screen.', 'Ничего страшного, это учебный экран.', 'Ештеңе етпейді, бұл оқу экраны.')} ${c.instruction}`;
     if (c.kind === 'icon') return `${c.hint}`;
-    if (c.kind === 'different') return ru ? 'У разных телефонов названия и расположение пунктов могут отличаться. Ищите по смыслу: слова из задания или похожий значок. Подсказка тоже поможет.' : 'Names and positions can differ between phones. Look for the meaning: the words in the task or a similar icon. The hint can help too.';
-    if (c.kind === 'question') return ru ? `Хороший вопрос. Попробуйте сделать так: ${c.instruction} Если не получится, нажмите «Подсказка».` : `Good question. Try this: ${c.instruction} If it does not work, press “Hint”.`;
-    return `${ru ? 'Давайте ещё раз, без спешки.' : 'Let us try again, with no rush.'} ${c.instruction} ${c.hint}`;
+    if (c.kind === 'different') return L(c.lang, 'Names and positions can differ between phones. Look for the meaning: the words in the task or a similar icon. The hint can help too.', 'У разных телефонов названия и расположение пунктов могут отличаться. Ищите по смыслу: слова из задания или похожий значок. Подсказка тоже поможет.', 'Әр телефонда пункттердің атауы мен орны әртүрлі болуы мүмкін. Мағынасы бойынша іздеңіз: тапсырмадағы сөздер немесе ұқсас белгі. Кеңес те көмектеседі.');
+    if (c.kind === 'question') return L(c.lang, `Good question. Try this: ${c.instruction} If it does not work, press “Hint”.`, `Хороший вопрос. Попробуйте сделать так: ${c.instruction} Если не получится, нажмите «Подсказка».`, `Жақсы сұрақ. Былай жасап көріңіз: ${c.instruction} Шықпаса, «Кеңес» батырмасын басыңыз.`);
+    return `${L(c.lang, 'Let us try again, with no rush.', 'Давайте ещё раз, без спешки.', 'Тағы бір рет, асықпай байқап көрейік.')} ${c.instruction} ${c.hint}`;
   }
 
   /* ---- new practice situation (SMS) ---- */
@@ -105,12 +104,15 @@ ${c.image ? 'A screenshot of the person\'s own real screen is attached. Compare 
     ]
   };
   const pick = a => a[Math.floor(Math.random() * a.length)];
+  /* text in the site language; Kazakh falls back to Russian only where no Kazakh is given */
+  const L = (lang, en, ru, kk) => lang === 'ru' ? ru : lang === 'kk' ? kk : en;
+  const LANG_NAME = {ru: 'Russian', kk: 'Kazakh', en: 'English'};
   async function scenario(lang, suspicious) {
     const topic = pick(suspicious ? TOPICS.danger : TOPICS.safe);
     const prompt = `${RULES(lang)}
 
 Write ONE new fictional SMS for a scam-awareness exercise. It must be ${suspicious ? 'SUSPICIOUS' : 'SAFE'}: ${topic}.
-Use made-up organisation names only (for example "Bank Primer", "Primer Post"), never real companies, phone numbers or real web addresses. If a link is needed, write it as [link]. Language: ${lang === 'ru' ? 'Russian' : 'English'}. At most 3 sentences.
+Use made-up organisation names only (for example "Bank Primer", "Primer Post"), never real companies, phone numbers or real web addresses. If a link is needed, write it as [link]. Language: ${LANG_NAME[lang] || 'English'}. At most 3 sentences.
 Reply with JSON only, no other text, in this shape:
 {"sender":"short sender name","text":"the SMS","signs":["up to 3 short warning signs, or reasons it is safe"],"why":"one or two plain sentences explaining the verdict","next":"one safe next step"}`;
     try {
@@ -133,6 +135,18 @@ Reply with JSON only, no other text, in this shape:
         {sender: 'Библиотека Пример', text: 'Напоминаем, что книгу нужно вернуть до пятницы. Спасибо!', signs: ['Нет ссылок', 'Нет срочности', 'Просто напоминание'], why: 'Нет давления, кодов и просьб о данных.', next: 'Верните книгу, когда будет удобно до пятницы.'}
       ]
     },
+    kk: {
+      danger: [
+        {sender: 'Мысал Банк', text: 'Шұғыл! Картаңыздағы төлем бұғатталып жатыр. Оны болдырмау үшін SMS-тегі кодты 5 минут ішінде операторға айтыңыз.', signs: ['Асықтыру', 'Кодты айтуды сұрау', 'Қорқытып қысым жасау'], why: 'Нағыз банк ешқашан SMS-тегі кодты сұрамайды. Код тек сізге керек.', next: 'Кодты айтпаңыз. Банктің телефонын картадан немесе ресми сайттан тауып, өзіңіз қоңырау шалыңыз.'},
+        {sender: 'Мысал Пошта', text: 'Сәлемдемеңіз ұсталып тұр. [link] сілтемесі арқылы 300 теңге алымды төлеңіз, әйтпесе ол бүгін қайтарылады.', signs: ['Сілтеме арқылы төлеу', '«Бүгін» мерзімі', 'Күтпеген сәлемдеме'], why: 'Алаяқтар карта деректерін алу үшін сілтеме арқылы шағын «алым» төлеуді жиі сұрайды.', next: 'Сілтемені ашпаңыз. Сәлемдемені жеткізу қызметінің ресми сайтынан тексеріңіз.'},
+        {sender: 'Жаңа нөмір', text: 'Апа, бұл менмін, телефоным бұзылды, біреудікінен жазып тұрмын. 50 000 шұғыл аударып жібер, кейін түсіндіремін.', signs: ['Жаңа нөмір', 'Шұғыл ақша аудару', 'Толық мәлімет жоқ'], why: 'Жақындардың атынан осылай ақша сұрайды. Дауыс пен нөмірді жасандыруға болады.', next: 'Туысыңызға ескі нөмірі бойынша қоңырау шалыңыз немесе тек ол білетін нәрсені сұраңыз.'}
+      ],
+      safe: [
+        {sender: 'Мысал Емхана', text: 'Еске саламыз: ертең 10:30-да терапевт қабылдауы, 12-кабинет. Жауап берудің қажеті жоқ.', signs: ['Сілтеме жоқ', 'Деректер сұралмайды', 'Жауап керек емес'], why: 'Бұл жай ғана еске салу. Онда сілтеме де, код та, шұғыл бірдеңе жасау туралы өтініш те жоқ.', next: 'Қаласаңыз, уақытты күнтізбеңіздегі жазбамен салыстырыңыз.'},
+        {sender: 'Мысал Дәріхана', text: 'Тапсырысыңыз беруге дайын. Дәріхана 20:00-ге дейін жұмыс істейді.', signs: ['Сілтеме жоқ', 'Ақша сұралмайды', 'Сабырлы үн'], why: 'Хабар фактіні айтады және ештеңе талап етпейді.', next: 'Тапсырысты ыңғайлы уақытта алыңыз.'},
+        {sender: 'Мысал Кітапхана', text: 'Кітапты жұмаға дейін қайтару керек екенін еске саламыз. Рақмет!', signs: ['Сілтеме жоқ', 'Асықтыру жоқ', 'Жай еске салу'], why: 'Қысым да, код та, деректер туралы өтініш те жоқ.', next: 'Кітапты жұмаға дейін ыңғайлы уақытта қайтарыңыз.'}
+      ]
+    },
     en: {
       danger: [
         {sender: 'Bank Primer', text: 'Urgent! A payment on your card is being blocked. Tell the operator the code from your SMS within 5 minutes to cancel it.', signs: ['Urgency', 'Asks for a code', 'Uses fear'], why: 'A real bank never asks for your SMS code. The code is only for you.', next: 'Do not share the code. Find the bank phone number on your card or official website and call yourself.'},
@@ -147,14 +161,14 @@ Reply with JSON only, no other text, in this shape:
     }
   };
   function fallbackScenario(lang, suspicious) {
-    const item = pick(POOL[lang === 'ru' ? 'ru' : 'en'][suspicious ? 'danger' : 'safe']);
+    const item = pick(POOL[POOL[lang] ? lang : 'en'][suspicious ? 'danger' : 'safe']);
     return Object.assign({suspicious, ai: false}, item);
   }
 
   /* ---- free chat with an optional screenshot ---- */
   const CHAT_RULES = lang => `You are a patient helper for adults aged 55+ in Kazakhstan who learn to use a smartphone, WhatsApp, Telegram, eGov, and the internet safely.
 Rules:
-- Write in ${lang === 'ru' ? 'Russian' : 'English'}, in plain everyday words, calm and kind, at most 6 short sentences. No markdown headings; a short numbered list is fine for steps.
+- Write in ${LANG_NAME[lang] || 'English'}, in plain everyday words, calm and kind, at most 6 short sentences. No markdown headings; a short numbered list is fine for steps.
 - If a screenshot is attached: say what app or screen you see, then tell exactly what to tap next. Names and positions differ between phones, so say so when unsure.
 - If you see personal data (phone numbers, ID/IIN, card numbers, codes, passwords, addresses), do NOT repeat it. Kindly advise hiding such data in screenshots in the future.
 - If the situation looks like a scam (urgency, a request for an SMS code, a password, money, or a strange link), say so clearly and give one safe next step. Never ask the person to send codes, passwords or card numbers.
@@ -163,12 +177,12 @@ Rules:
 - If the question is unrelated to phones, apps or the internet, gently say what you can help with.`;
   async function chat(c) {
     const history = (c.history || []).slice(-8).map(m => (m.role === 'user' ? 'Person: ' : 'Helper: ') + m.text).join('\n');
-    const prompt = `${CHAT_RULES(c.lang)}\n\n${history ? 'Conversation so far:\n' + history + '\n\n' : ''}${c.image ? '(A screenshot is attached to the next message.)\n' : ''}Person: ${c.text || (c.lang === 'ru' ? 'Посмотрите, пожалуйста, мой скриншот.' : 'Please look at my screenshot.')}\nHelper:`;
+    const prompt = `${CHAT_RULES(c.lang)}\n\n${history ? 'Conversation so far:\n' + history + '\n\n' : ''}${c.image ? '(A screenshot is attached to the next message.)\n' : ''}Person: ${c.text || (L(c.lang, 'Please look at my screenshot.', 'Посмотрите, пожалуйста, мой скриншот.', 'Скриншотымды қараңызшы.'))}\nHelper:`;
     try {
       const text = (await ask(prompt, {image: c.image})).trim();
       if (text) return {text, ai: true};
-    } catch (e) { if (e && e.message === 'no-image') return {text: c.lang === 'ru' ? 'В этой версии сайта нельзя разбирать скриншоты. Опишите, что на экране, словами, и я постараюсь помочь.' : 'Screenshots are not available in this version of the site. Describe what is on the screen and I will try to help.', ai: false}; }
-    return {text: c.lang === 'ru' ? 'Сейчас помощник на связи не в полном режиме, поэтому свободный чат недоступен. Попробуйте упражнения: там подсказки всегда под рукой. Если нужен именно ИИ-чат, откройте сайт через ссылку с подключённым сервером.' : 'The AI chat is not connected right now. Try the exercises: hints are always available there. For the live AI chat, open the site with the server connected.', ai: false};
+    } catch (e) { if (e && e.message === 'no-image') return {text: L(c.lang, 'Screenshots are not available in this version of the site. Describe what is on the screen and I will try to help.', 'В этой версии сайта нельзя разбирать скриншоты. Опишите, что на экране, словами, и я постараюсь помочь.', 'Сайттың бұл нұсқасында скриншоттарды талдау мүмкін емес. Экранда не тұрғанын сөзбен сипаттаңыз, мен көмектесуге тырысамын.'), ai: false}; }
+    return {text: L(c.lang, 'The AI chat is not connected right now. Try the exercises: hints are always available there. For the live AI chat, open the site with the server connected.', 'Сейчас помощник на связи не в полном режиме, поэтому свободный чат недоступен. Попробуйте упражнения: там подсказки всегда под рукой. Если нужен именно ИИ-чат, откройте сайт через ссылку с подключённым сервером.', 'Қазір көмекші толық режимде жұмыс істемейді, сондықтан еркін чат қолжетімсіз. Жаттығуларды байқап көріңіз: онда кеңестер әрдайым жаныңызда. ЖИ-чат керек болса, сайтты сервері қосылған сілтеме арқылы ашыңыз.'), ai: false};
   }
 
   window.CSAssistant = {explain, scenario, chat, available};

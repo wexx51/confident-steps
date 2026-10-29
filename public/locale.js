@@ -171,10 +171,57 @@
   };
   const STORAGE_KEY = 'confident-steps-language';
   let language = 'en';
-  function valid(value) { return value === 'en' || value === 'ru'; }
+  function valid(value) { return value === 'en' || value === 'ru' || value === 'kk'; }
+  /* Kazakh comes from kk.js, keyed by the Russian text. Texts with inserted values are matched by pattern,
+     and the inserted pieces are translated too; text glued from several sentences is translated sentence by sentence.
+     Anything not found stays Russian. */
+  const kkCache = new Map();
+  let kkPatterns = null;
+  function kazakhPatterns() {
+    if (!kkPatterns) {
+      const esc = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      kkPatterns = ((window.CSKazakh || {}).patterns || []).map(function (pair) {
+        return [new RegExp('^' + pair[0].split(/\{\d\}/).map(esc).join('([\\s\\S]*?)') + '$'), (pair[0].match(/\{\d\}/g) || []).map(function (m) { return Number(m[1]); }), pair[1]];
+      });
+    }
+    return kkPatterns;
+  }
+  function kazakhPiece(text) {
+    const core = text.trim();
+    if (!core) return text;
+    const found = kazakh(core);
+    return found === core ? text : text.replace(core, found);
+  }
+  function kazakh(russian) {
+    const dict = (window.CSKazakh || {}).strings;
+    if (!dict) return russian;
+    if (Object.prototype.hasOwnProperty.call(dict, russian)) return dict[russian];
+    if (kkCache.has(russian)) return kkCache.get(russian);
+    let result = russian;
+    for (const [re, order, kk] of kazakhPatterns()) {
+      const m = russian.match(re);
+      if (!m) continue;
+      const values = {};
+      order.forEach(function (n, i) { values[n] = kazakhPiece(m[i + 1]); });
+      result = kk.replace(/\{(\d)\}/g, function (_, n) { return values[n]; });
+      break;
+    }
+    if (result === russian) {
+      /* sentences end with . ! ? … (or a closing quote after them) followed by a space; “Kaspi.kz” stays whole */
+      const parts = russian.split(/(?<=[.!?…]»?)(\s+)/);
+      if (parts.length > 1) {
+        const done = parts.map(function (p) { return /^\s*$/.test(p) ? p : dict[p]; });
+        if (done.every(function (p) { return p !== undefined; })) result = done.join('');
+      }
+    }
+    if (result === russian && /[а-яё]/i.test(russian)) (window.CSKazakhMissing = window.CSKazakhMissing || new Set()).add(russian); /* for checking the translation */
+    kkCache.set(russian, result);
+    return result;
+  }
+  function pick(english, russian) { return language === 'ru' ? russian : language === 'kk' ? kazakh(russian) : english; }
   function translate(key) {
     const entry = strings[key];
-    return entry ? entry[language === 'ru' ? 1 : 0] : key;
+    return entry ? pick(entry[0], entry[1]) : key;
   }
   function applyStaticTranslations() {
     document.documentElement.lang = language;
@@ -213,7 +260,7 @@
   }
   window.CSLocale = {
     get lang() { return language; },
-    t: function (english, russian) { return language === 'ru' ? russian : english; },
+    t: pick,
     setLanguage: setLanguage
   };
   let requested;
