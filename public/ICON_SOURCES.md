@@ -13,3 +13,4 @@ Platform and app names are trademarks of their respective owners. This is an edu
 
 - WhatsApp, Telegram: icon files supplied by the project author (embedded as x_whatsapp, x_telegram).
 - eGov mobile: icon file supplied by the project author (x_egov).
+- Kaspi.kz: icon file supplied by the project author (embedded as x_kaspi in icondata-kaspi.js).
