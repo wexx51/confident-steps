@@ -563,10 +563,11 @@
     stopSpeaking();
     const phone = state.device === 'phone';
     const task = getTask(active.id), meta = stepMeta(), ready = active.valid[active.step];
-    $('#training-view').innerHTML = `<button class="text-button back-link" data-action="practices">${t('← All exercises', '← Все практики')}</button><div class="training-header"><div><p class="eyebrow">${t('EXERCISE', 'ПРАКТИКА')} ${String(ids().indexOf(active.id) + 1).padStart(2, '0')} / ${String(ids().length).padStart(2, '0')}</p><h1 id="training-title" tabindex="-1">${task.title}</h1></div><span class="device-name">${deviceLabel()}</span></div><div class="training-layout"><div class="instruction-panel"><p class="step-count">${t(`STEP ${active.step + 1} OF 4`, `ШАГ ${active.step + 1} ИЗ 4`)}</p><div class="step-progress" role="progressbar" aria-label="${t('Completed steps', 'Пройденные шаги')}" aria-valuemin="0" aria-valuemax="4" aria-valuenow="${active.step}">${[0, 1, 2, 3].map(i => `<span${i < active.step ? ' class="done"' : ''}></span>`).join('')}</div><h2 id="step-title" tabindex="-1">${meta.title}</h2><p class="instruction-text">${meta.text}</p><button class="hint-button" data-action="hint" aria-expanded="${active.hint}" aria-controls="step-hint" data-testid="show-hint">? ${t('Hint', 'Подсказка')}</button>${speechOK ? ` <button class="hint-button speak-button" data-action="speak" aria-pressed="false" data-testid="read-aloud"><span aria-hidden="true">🔊</span> <span class="speak-label">${t('Read aloud', 'Прочитать вслух')}</span></button>` : ''} <button class="hint-button assist-open" data-action="assist" aria-expanded="${active.assist.open}" data-testid="ask-helper">${t('Stuck? Ask the helper', 'Не получается? Спросить помощника')}</button><div id="step-hint" class="hint-box"${active.hint ? '' : ' hidden'}>${meta.hint}</div><div id="assistant-slot">${assistHTML()}</div><div class="feedback ${active.tone}" id="step-feedback" role="status">${active.feedback ? active.feedback() : ''}</div><div class="training-nav"><button class="button secondary" data-action="previous" data-testid="previous-step">← ${t('Back', 'Назад')}</button><button class="button primary" data-action="next" data-testid="next-step"${ready ? '' : ' disabled'}>${active.step === 3 ? t('Finish', 'Завершить') : t('Next', 'Дальше')} <span aria-hidden="true">→</span></button><button class="text-button" data-action="restart" data-testid="restart-task">${t('Start again', 'Начать заново')}</button></div><p class="safe-note"><span aria-hidden="true">◇</span>${t('These are practice screens. You are not changing your device or sending real information.', 'Это учебные экраны. Вы не меняете устройство и не отправляете настоящие данные.')}</p></div><div class="simulator ${state.device}" data-testid="simulator"><div class="simulator-label"><span>${t('PRACTICE SCREEN', 'УЧЕБНЫЙ ЭКРАН')}</span>${osSwitch()}</div>${screen()}</div></div>`;
+    $('#training-view').innerHTML = `<button class="text-button back-link" data-action="practices">${t('← All exercises', '← Все практики')}</button><div class="training-header"><div><p class="eyebrow">${t('EXERCISE', 'ПРАКТИКА')} ${String(ids().indexOf(active.id) + 1).padStart(2, '0')} / ${String(ids().length).padStart(2, '0')}</p><h1 id="training-title" tabindex="-1">${task.title}</h1></div><span class="device-name">${deviceLabel()}</span></div><div class="training-layout"><div class="instruction-panel"><p class="step-count">${t(`STEP ${active.step + 1} OF 4`, `ШАГ ${active.step + 1} ИЗ 4`)}</p><div class="step-progress" role="progressbar" aria-label="${t('Completed steps', 'Пройденные шаги')}" aria-valuemin="0" aria-valuemax="4" aria-valuenow="${active.step}">${[0, 1, 2, 3].map(i => `<span${i < active.step ? ' class="done"' : ''}></span>`).join('')}</div><h2 id="step-title" tabindex="-1">${meta.title}</h2><p class="instruction-text">${meta.text}</p><button class="hint-button" data-action="hint" aria-expanded="${active.hint}" aria-controls="step-hint" data-testid="show-hint">? ${t('Hint', 'Подсказка')}</button>${speechOK ? ` <button class="hint-button speak-button" data-action="speak" aria-pressed="false" data-testid="read-aloud"><span aria-hidden="true">🔊</span> <span class="speak-label">${t('Read aloud', 'Прочитать вслух')}</span></button>` : ''} <button class="hint-button assist-open" data-action="assist" aria-expanded="${active.assist.open}" data-testid="ask-helper">${t('Stuck? Ask the helper', 'Не получается? Спросить помощника')}</button><div id="step-hint" class="hint-box"${active.hint ? '' : ' hidden'}>${meta.hint}<p class="tap-note"><span aria-hidden="true">👆</span> ${t('On the practice screen, the place to tap is now pulsing.', 'На учебном экране сейчас мигает место, куда нажать.')} <button type="button" class="text-button" data-action="show-target" data-testid="show-target">${t('Show me', 'Показать')}</button></p></div><div id="assistant-slot">${assistHTML()}</div><div class="feedback ${active.tone}" id="step-feedback" role="status">${active.feedback ? active.feedback() : ''}</div><div class="training-nav"><button class="button secondary" data-action="previous" data-testid="previous-step">← ${t('Back', 'Назад')}</button><button class="button primary" data-action="next" data-testid="next-step"${ready ? '' : ' disabled'}>${active.step === 3 ? t('Finish', 'Завершить') : t('Next', 'Дальше')} <span aria-hidden="true">→</span></button><button class="text-button" data-action="restart" data-testid="restart-task">${t('Start again', 'Начать заново')}</button></div><p class="safe-note"><span aria-hidden="true">◇</span>${t('These are practice screens. You are not changing your device or sending real information.', 'Это учебные экраны. Вы не меняете устройство и не отправляете настоящие данные.')}</p></div><div class="simulator ${state.device}" data-testid="simulator"><div class="simulator-label"><span>${t('PRACTICE SCREEN', 'УЧЕБНЫЙ ЭКРАН')}</span>${osSwitch()}</div>${screen()}</div></div>`;
     if (ready && !(active.id === 'text' && active.step === 2)) {
       $('#training-view [data-sim="correct"]')?.classList.add('correct');
     }
+    markTarget();
     if (focus) focusTitle('#step-title');
   }
   function feedback(message, tone = 'retry') {
@@ -585,8 +586,20 @@
     };
     return messages[active.id][active.step];
   }
+  /* ---------- “where to tap”: while the hint is open, the right place on the practice screen pulses ---------- */
+  function tapTarget() {
+    if (!active) return null;
+    if (active.id === 'text' && active.step === 2) return $('#training-view .simulator [data-sim="zoom-plus"]');
+    return $('#training-view .simulator [data-sim="correct"]');
+  }
+  function markTarget() {
+    $$('#training-view .tap-here').forEach(el => el.classList.remove('tap-here'));
+    const target = tapTarget();
+    if (active && active.hint && !active.valid[active.step] && target) target.classList.add('tap-here');
+  }
   function correct() {
     active.valid[active.step] = true;
+    $$('#training-view .tap-here').forEach(el => el.classList.remove('tap-here'));
     $('#training-view [data-action="next"]').disabled = false;
     feedback(correctMessage, 'success');
   }
@@ -613,6 +626,7 @@
       const thumb = $('#size-thumb');
       if (thumb) thumb.style.left = ((active.zoom - 80) / 70 * 100) + '%';
       active.valid[2] = active.zoom >= 120;
+      markTarget();
       $('#training-view [data-action="next"]').disabled = !active.valid[2];
       feedback(() => active.valid[2] ? t(`Text size is now ${active.zoom}%. You can move to the next step.`, `Текст увеличен до ${active.zoom}%. Можно переходить дальше.`) : t(`The size is ${active.zoom}%. Select plus to reach 120% or more.`, `Сейчас ${active.zoom}%. Нажмите плюс, чтобы получить 120% или больше.`), active.valid[2] ? 'success' : '');
       return;
@@ -786,7 +800,8 @@
       case 'print': window.print(); break;
       case 'certificate': if (active) showCertificate(active.id); break;
       case 'certificate-back': showView('training'); renderCompletion(true); break;
-      case 'hint': active.hint = !active.hint; $('#step-hint').hidden = !active.hint; button.setAttribute('aria-expanded', String(active.hint)); break;
+      case 'hint': active.hint = !active.hint; $('#step-hint').hidden = !active.hint; button.setAttribute('aria-expanded', String(active.hint)); markTarget(); break;
+      case 'show-target': tapTarget()?.scrollIntoView({block: 'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'}); break;
       case 'previous': if (active.step > 0) { active.step--; active.feedback = null; active.tone = ''; active.hint = false; resetAssist(); renderTraining(true); } else home('practices'); break;
       case 'next': if (!active.valid[active.step]) return; if (active.step === 3) completeTask(); else { active.step++; active.feedback = null; active.tone = ''; active.hint = false; resetAssist(); renderTraining(true); } break;
       case 'restart': beginTask(active.id, true); announce(t('The exercise has restarted. You can practise at your own pace.', 'Практика начата заново. Можно пробовать в своём темпе.')); break;
