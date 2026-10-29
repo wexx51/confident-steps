@@ -84,7 +84,7 @@
   function showView(view, scroll = true) {
     if (view !== currentView) stopSpeaking();
     currentView = view;
-    ['home', 'training', 'confidence', 'survey', 'chat', 'cheatsheet'].forEach(name => { $('#' + name + '-view').hidden = name !== view; });
+    ['home', 'training', 'confidence', 'survey', 'chat', 'cheatsheet', 'certificate'].forEach(name => { $('#' + name + '-view').hidden = name !== view; });
     if (scroll) window.scrollTo({top: 0, behavior: 'instant'});
   }
   function home(section) {
@@ -639,6 +639,23 @@
     showView('cheatsheet');
     renderCheatsheet(true);
   }
+  /* ---------- certificate for a completed exercise: no account, the name stays on this page only ---------- */
+  let certificate = null;
+  function certificateHTML() {
+    const {id, name, date} = certificate, who = name.trim();
+    const day = date.toLocaleDateString(window.CSLocale.lang === 'ru' ? 'ru-RU' : 'en-GB', {day: 'numeric', month: 'long', year: 'numeric'});
+    return `<div class="certificate" data-testid="certificate"><p class="eyebrow">${t('LEARNING CERTIFICATE', 'УЧЕБНЫЙ СЕРТИФИКАТ')}</p><p class="cert-brand">${t('Confident Steps', 'Уверенный шаг')} <span aria-hidden="true">↗</span></p><h2 class="cert-title">${t('Certificate of completion', 'Сертификат об освоении темы')}</h2><p class="cert-line">${t('This confirms that the practice exercise', 'Подтверждаем, что практика')}</p><p class="cert-topic">«${getTask(id).title}»</p><p class="cert-line">${t(`has been completed on ${deviceLabel()}.`, `пройдена на устройстве ${deviceLabel()}.`)}</p><p class="cert-name"><span>${t('Participant', 'Участник')}</span><strong class="cert-name-value">${who ? esc(who) : '&nbsp;'}</strong></p><div class="cert-foot"><span>${t('Date', 'Дата')}: ${day}</span><span>DigiLit · Astana IT University</span></div><p class="cert-note">${t('A learning certificate from a practice website. It is not an official document.', 'Учебный сертификат с сайта для практики. Не является официальным документом.')}</p></div>`;
+  }
+  function renderCertificate(focus = false) {
+    $('#certificate-view').innerHTML = `<div class="no-print"><button class="text-button back-link" data-action="certificate-back">${t('← Back to the exercise', '← Вернуться к практике')}</button><h1 id="certificate-title" tabindex="-1">${t('Your certificate', 'Ваш сертификат')}</h1><p class="cert-intro">${t('You can add your name, or leave it empty. The name is only shown on this page: it is not sent anywhere or saved.', 'Можно вписать своё имя или оставить поле пустым. Имя видно только на этой странице: оно никуда не отправляется и не сохраняется.')}</p><label class="cert-field" for="cert-name">${t('Name on the certificate (optional)', 'Имя на сертификате (необязательно)')}<input id="cert-name" type="text" maxlength="60" autocomplete="off" value="${esc(certificate.name)}"></label><div class="cs-actions"><button class="button primary" data-action="print" data-testid="print-certificate">${t('Print or save as PDF', 'Распечатать или сохранить в PDF')}</button></div></div><div id="certificate-slot">${certificateHTML()}</div>`;
+    if (focus) focusTitle('#certificate-title');
+  }
+  function showCertificate(id) {
+    if (!state.progress[state.device].includes(id)) return;
+    certificate = {id, name: certificate && certificate.id === id ? certificate.name : '', date: new Date()};
+    showView('certificate');
+    renderCertificate(true);
+  }
   function completeTask() {
     const id = active.id;
     if (!state.progress[state.device].includes(id)) state.progress[state.device].push(id);
@@ -651,7 +668,7 @@
     stopSpeaking();
     const id = active.id;
     const next = ids().find(task => !state.progress[state.device].includes(task));
-    $('#training-view').innerHTML = `<button class="text-button back-link" data-action="practices">${t('← All exercises', '← Все практики')}</button><div class="finish-panel"><div class="finish-check" aria-hidden="true">✓</div><p class="eyebrow">${t('EXERCISE COMPLETE', 'ПРАКТИКА ЗАВЕРШЕНА')} · ${deviceLabel().toUpperCase()}</p><h1 id="training-title" tabindex="-1">${t('You have taken another step.', 'У вас получился ещё один шаг.')}</h1><p>${t(`You completed “${getTask(id).title.toLowerCase()}”. You can repeat it as often as you like.`, `Вы прошли практику «${getTask(id).title.toLowerCase()}». Её можно повторить столько раз, сколько вам удобно.`)}</p><div class="takeaway">${getTask(id).takeaway}</div><div class="finish-actions">${next ? `<button class="button primary" data-task="${next}" data-testid="next-practice">${t('Next exercise', 'Следующая практика')} <span aria-hidden="true">→</span></button>` : `<button class="button primary" data-action="practices">${t('All exercises', 'Все практики')} <span aria-hidden="true">→</span></button>`}<button class="button secondary" data-action="confidence-after" data-testid="confidence-after">${t('Rate your confidence', 'Отметить уверенность')}</button><button class="text-button" data-task="${id}">${t('Repeat this exercise', 'Повторить эту практику')}</button><button class="text-button" data-action="cheatsheet" data-id="${id}">${t('Cheat sheet to print', 'Шпаргалка для печати')}</button></div>${id === 'message' ? `<div class="sc-offer"><strong>${t('Want more practice?', 'Хотите потренироваться ещё?')}</strong><p>${t('The helper can write a new made-up message for you to check.', 'Помощник придумает для вас новое учебное сообщение, а вы проверите его.')}</p><button class="button secondary" data-action="sc-new" data-testid="new-situation">${t('New situation from the helper', 'Новая ситуация от помощника')}</button></div>` : ''}<p class="mock-note">${t(`Completed ${state.progress[state.device].length} of ${ids().length} exercises for the ${state.device === 'phone' ? 'phone' : 'computer'}. This records completion; it does not measure your ability.`, `Пройдено ${state.progress[state.device].length} из ${ids().length} практик для ${state.device === 'phone' ? 'телефона' : 'компьютера'}. Это отметка прохождения, а не оценка способностей.`)}</p></div>`;
+    $('#training-view').innerHTML = `<button class="text-button back-link" data-action="practices">${t('← All exercises', '← Все практики')}</button><div class="finish-panel"><div class="finish-check" aria-hidden="true">✓</div><p class="eyebrow">${t('EXERCISE COMPLETE', 'ПРАКТИКА ЗАВЕРШЕНА')} · ${deviceLabel().toUpperCase()}</p><h1 id="training-title" tabindex="-1">${t('You have taken another step.', 'У вас получился ещё один шаг.')}</h1><p>${t(`You completed “${getTask(id).title.toLowerCase()}”. You can repeat it as often as you like.`, `Вы прошли практику «${getTask(id).title.toLowerCase()}». Её можно повторить столько раз, сколько вам удобно.`)}</p><div class="takeaway">${getTask(id).takeaway}</div><div class="finish-actions">${next ? `<button class="button primary" data-task="${next}" data-testid="next-practice">${t('Next exercise', 'Следующая практика')} <span aria-hidden="true">→</span></button>` : `<button class="button primary" data-action="practices">${t('All exercises', 'Все практики')} <span aria-hidden="true">→</span></button>`}<button class="button secondary" data-action="certificate" data-testid="open-certificate">${t('Get a certificate', 'Получить сертификат')}</button><button class="button secondary" data-action="confidence-after" data-testid="confidence-after">${t('Rate your confidence', 'Отметить уверенность')}</button><button class="text-button" data-task="${id}">${t('Repeat this exercise', 'Повторить эту практику')}</button><button class="text-button" data-action="cheatsheet" data-id="${id}">${t('Cheat sheet to print', 'Шпаргалка для печати')}</button></div>${id === 'message' ? `<div class="sc-offer"><strong>${t('Want more practice?', 'Хотите потренироваться ещё?')}</strong><p>${t('The helper can write a new made-up message for you to check.', 'Помощник придумает для вас новое учебное сообщение, а вы проверите его.')}</p><button class="button secondary" data-action="sc-new" data-testid="new-situation">${t('New situation from the helper', 'Новая ситуация от помощника')}</button></div>` : ''}<p class="mock-note">${t(`Completed ${state.progress[state.device].length} of ${ids().length} exercises for the ${state.device === 'phone' ? 'phone' : 'computer'}. This records completion; it does not measure your ability.`, `Пройдено ${state.progress[state.device].length} из ${ids().length} практик для ${state.device === 'phone' ? 'телефона' : 'компьютера'}. Это отметка прохождения, а не оценка способностей.`)}</p></div>`;
     if (focus) { window.scrollTo({top: 0, behavior: 'instant'}); focusTitle('#training-title'); }
   }
   function scale(phase, title) {
@@ -716,6 +733,8 @@
       case 'speak': speakStep(); break;
       case 'cheatsheet': showCheatsheet(button.dataset.id); break;
       case 'print': window.print(); break;
+      case 'certificate': if (active) showCertificate(active.id); break;
+      case 'certificate-back': showView('training'); renderCompletion(true); break;
       case 'hint': active.hint = !active.hint; $('#step-hint').hidden = !active.hint; button.setAttribute('aria-expanded', String(active.hint)); break;
       case 'previous': if (active.step > 0) { active.step--; active.feedback = null; active.tone = ''; active.hint = false; resetAssist(); renderTraining(true); } else home('practices'); break;
       case 'next': if (!active.valid[active.step]) return; if (active.step === 3) completeTask(); else { active.step++; active.feedback = null; active.tone = ''; active.hint = false; resetAssist(); renderTraining(true); } break;
@@ -743,6 +762,11 @@
     if (state.save) { if (persist()) setLocalizedStatus('storage-status', () => t('Progress and confidence ratings will be saved in this browser. Survey answers are not saved.', 'Прогресс и отметки уверенности будут сохранены в этом браузере. Анкета не сохраняется.')); }
     else { try { localStorage.removeItem(key); setLocalizedStatus('storage-status', () => t('Saving is off. Your progress is available until you reload the page.', 'Сохранение выключено. Прогресс доступен до обновления страницы.')); } catch (_) { setLocalizedStatus('storage-status', () => t('Saving is off. The browser did not allow its storage to be cleared. You can clear it in your browser settings.', 'Сохранение выключено. Браузер не разрешил очистить хранилище; его можно очистить в настройках браузера.')); } }
     announce($('#storage-status').textContent);
+  });
+  document.addEventListener('input', event => {
+    if (event.target.id !== 'cert-name' || !certificate) return;
+    certificate.name = event.target.value;
+    $('#certificate-slot .cert-name-value').innerHTML = certificate.name.trim() ? esc(certificate.name.trim()) : '&nbsp;';
   });
   document.addEventListener('change', event => {
     if (event.target.id === 'chat-file') { pickImage(event.target.files[0]); event.target.value = ''; }
@@ -830,6 +854,8 @@
       else renderTraining();
     } else if (currentView === 'chat') {
       const keep = $('#chat-q') ? $('#chat-q').value : ''; renderChat(); if ($('#chat-q')) $('#chat-q').value = keep;
+    } else if (currentView === 'certificate' && certificate) {
+      renderCertificate();
     } else if (currentView === 'cheatsheet') {
       renderCheatsheet();
     } else if (currentView === 'confidence' && confidenceContext) {
