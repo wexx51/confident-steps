@@ -78,6 +78,16 @@
     try { localStorage.setItem(key, JSON.stringify(state)); return true; }
     catch (_) { setLocalizedStatus('storage-status', () => t('The browser did not allow saving. You can keep practising on this page.', 'Браузер не разрешил сохранение. Можно продолжать практику на этой странице.')); return false; }
   }
+  /* ---------- anonymous statistics: totals only, see server.js; off if the visitor says so or the browser asks for privacy ---------- */
+  const noStatsKey = 'uverenny-shag-nostats';
+  function statsOff() {
+    if (navigator.globalPrivacyControl === true) return true;
+    try { return localStorage.getItem(noStatsKey) === '1'; } catch (_) { return false; }
+  }
+  function track(e, data = {}) {
+    if (statsOff() || location.protocol === 'file:') return;
+    fetch('/api/stats', {method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify(Object.assign({e}, data)), keepalive: true}).catch(() => { /* statistics never get in the way */ });
+  }
   function deviceName() { return state.device === 'phone' ? t('Phone', 'Телефон') : t('Computer', 'Компьютер'); }
   function deviceLabel() { return state.device === 'phone' ? (state.os === 'ios' ? 'iPhone' : 'Android') : (state.dos === 'mac' ? 'Mac' : 'Windows'); }
   const curOs = () => state.device === 'phone' ? state.os : state.dos;
@@ -85,7 +95,7 @@
   function showView(view, scroll = true) {
     if (view !== currentView) stopSpeaking();
     currentView = view;
-    ['home', 'training', 'confidence', 'survey', 'chat', 'cheatsheet', 'certificate', 'project', 'summary', 'invite', 'trainer'].forEach(name => { $('#' + name + '-view').hidden = name !== view; });
+    ['home', 'training', 'confidence', 'survey', 'chat', 'cheatsheet', 'certificate', 'project', 'summary', 'invite', 'trainer', 'stats'].forEach(name => { $('#' + name + '-view').hidden = name !== view; });
     if (scroll) window.scrollTo({top: 0, behavior: 'instant'});
   }
   function home(section) {
@@ -246,6 +256,7 @@
     scenario = null;
     showView('training');
     renderTraining(true);
+    track('start', {id, os: curOs()});
   }
 
   /* ---------- building blocks for practice screens ---------- */
@@ -651,6 +662,7 @@
   function showCheatsheet(id) {
     if (!ids().includes(id)) { home('practices'); return; }
     cheatsheetId = id;
+    track('cheatsheet', {id});
     showView('cheatsheet');
     renderCheatsheet(true);
   }
@@ -668,6 +680,7 @@
   function showCertificate(id) {
     if (!state.progress[state.device].includes(id)) return;
     certificate = {id, name: certificate && certificate.id === id ? certificate.name : '', date: new Date()};
+    track('certificate', {id});
     showView('certificate');
     renderCertificate(true);
   }
@@ -686,7 +699,8 @@
       t('Progress and confidence ratings are kept only in this browser, and only if you turn on saving. You can delete them at any time.', 'Прогресс и отметки уверенности хранятся только в этом браузере и только если вы включили сохранение. Их можно удалить в любой момент.'),
       t('Survey answers are not sent anywhere: you download them as a file and decide yourself whether to share it.', 'Ответы анкеты никуда не отправляются: вы скачиваете их файлом и сами решаете, передавать ли его.'),
       t('The name on a certificate stays on the page and is not saved.', 'Имя на сертификате остаётся на странице и не сохраняется.'),
-      t('Questions and screenshots for the AI helper go through our server to Google Gemini to get an answer. The site does not store them. Please do not share phone numbers, IIN, card numbers or codes.', 'Вопросы и скриншоты для ИИ-помощника идут через наш сервер в Google Gemini, чтобы получить ответ. Сайт их не хранит. Пожалуйста, не пишите номера телефонов, ИИН, номера карт и коды.')
+      t('Questions and screenshots for the AI helper go through our server to Google Gemini to get an answer. The site does not store them. Please do not share phone numbers, IIN, card numbers or codes.', 'Вопросы и скриншоты для ИИ-помощника идут через наш сервер в Google Gemini, чтобы получить ответ. Сайт их не хранит. Пожалуйста, не пишите номера телефонов, ИИН, номера карт и коды.'),
+      t('The site counts only anonymous totals: visits, which exercises were started and finished, the phone type, the language, trainer scores and confidence ratings. No names, addresses, IP or cookies are stored.', 'Сайт считает только анонимные общие суммы: посещения, какие практики начаты и пройдены, тип телефона, язык, результаты тренажёра и отметки уверенности. Имена, адреса, IP и cookies не сохраняются.') + `<label class="switch-label stats-switch"><input type="checkbox" id="stats-off" data-testid="stats-off"${statsOff() ? ' checked' : ''}><span class="switch" aria-hidden="true"></span>${t('Do not send statistics from this browser', 'Не отправлять статистику из этого браузера')}</label><button class="text-button" data-action="stats" data-testid="open-stats">${t('See the project statistics', 'Посмотреть статистику проекта')}</button>`
     ])}${block(t('Easier to read and hear', 'Удобно читать и слушать'), [
       t('“AA” in the header makes all text larger.', 'Кнопка «АА» в шапке делает весь текст крупнее.'),
       t('◐ turns on high contrast: black background, white text, yellow buttons.', 'Кнопка ◐ включает высокий контраст: чёрный фон, белый текст, жёлтые кнопки.'),
@@ -717,6 +731,47 @@ ${installHTML()}<p class="project-foot">${t('Sources of the app icons are listed
   window.addEventListener('beforeinstallprompt', event => { event.preventDefault(); installPrompt = event; if (currentView === 'project') renderProject(); });
   window.addEventListener('appinstalled', () => { installPrompt = null; if (currentView === 'project') renderProject(); });
   if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => { /* the site works without it */ });
+  /* ---------- public page with the anonymous totals ---------- */
+  let statsData = null;
+  async function showStats() {
+    showView('stats');
+    statsData = statsData && Date.now() - statsData.at < 60000 ? statsData : null;
+    if (!statsData) {
+      $('#stats-view').innerHTML = `<p class="stats-loading" role="status">${t('Loading…', 'Загрузка…')}</p>`;
+      try {
+        const r = await fetch('/api/stats');
+        if (!r.ok) throw new Error();
+        statsData = Object.assign(await r.json(), {at: Date.now()});
+      } catch (_) { statsData = {error: true, at: 0}; }
+    }
+    renderStats(true);
+  }
+  function renderStats(focus = false) {
+    const back = `<button class="text-button back-link" data-action="project">${t('← About the project', '← О проекте')}</button>`, head = `${back}<p class="eyebrow">${t('ANONYMOUS TOTALS', 'АНОНИМНЫЕ СУММЫ')}</p><h1 id="stats-title" tabindex="-1">${t('Project statistics', 'Статистика проекта')}</h1>`;
+    if (!statsData || statsData.error) { $('#stats-view').innerHTML = `${head}<p class="intro">${t('Could not load the statistics. Check the internet connection and try again.', 'Не удалось загрузить статистику. Проверьте интернет и попробуйте ещё раз.')}</p><button class="button secondary" data-action="stats-reload">${t('Try again', 'Попробовать ещё раз')}</button>`; if (focus) focusTitle('#stats-title'); return; }
+    const T = statsData.totals, n = k => T[k] || 0, fmt = v => v.toLocaleString(window.CSLocale.lang === 'en' ? 'en-GB' : 'ru-RU');
+    const done = statsData.lessons.reduce((a, id) => a + n('done:' + id), 0), runs = n('trainer:runs');
+    const avgScore = runs ? [...Array(11).keys()].reduce((a, k) => a + k * n('trainer:score:' + k), 0) / runs : null;
+    const tile = (value, label) => `<div class="st-tile"><strong>${value}</strong><span>${label}</span></div>`;
+    const hbars = rows => { const max = Math.max(1, ...rows.map(r => r[1])); return `<div class="st-hbars">${rows.map(([label, v]) => `<div class="st-hrow"><span>${label}</span><div class="st-track" aria-hidden="true"><i style="width:${v / max * 100}%"></i></div><b>${fmt(v)}</b></div>`).join('')}</div>`; };
+    const vbars = (rows, labelEvery = 1) => { const max = Math.max(1, ...rows.map(r => r[1])); return `<div class="st-vbars" role="img" aria-label="${rows.map(([l, v]) => `${l}: ${v}`).join(', ')}">${rows.map(([label, v], i) => `<div class="st-vcol" title="${label}: ${fmt(v)}"><b>${v ? fmt(v) : ''}</b><i style="height:${v / max * 100}%"></i><span>${i % labelEvery === 0 || i === rows.length - 1 ? label : ''}</span></div>`).join('')}</div>`; };
+    /* the last 30 days ending today (UTC, as the server counts), days without visits show as zero */
+    const days = [...Array(30).keys()].reverse().map(back => { const d = new Date(Date.now() - back * 864e5).toISOString().slice(0, 10); return [d.slice(8, 10) + '.' + d.slice(5, 7), statsData.days[d] || 0]; });
+    const lessonRows = statsData.lessons.map(id => [id, n('start:' + id), n('done:' + id)]).filter(r => r[1] || r[2]).sort((a, b) => b[1] - a[1]);
+    const conf = device => ['before', 'after'].map(phase => { const c = [1, 2, 3, 4, 5].map(v => n(`conf:${device}:${phase}:${v}`)), total = c.reduce((a, b) => a + b, 0); return total ? (c.reduce((a, b, i) => a + b * (i + 1), 0) / total) : null; });
+    const confRow = (device, name) => { const [b, a] = conf(device); return b || a ? `<div class="st-conf"><h3>${name}</h3>${b ? `<div class="sum-row"><span class="sum-phase">${t('Before', 'До')}</span><div class="sum-track" aria-hidden="true"><i style="width:${b * 20}%"></i></div><span class="sum-val"><strong>${b.toFixed(1)} ${t('of 5', 'из 5')}</strong></span></div>` : ''}${a ? `<div class="sum-row"><span class="sum-phase">${t('After', 'После')}</span><div class="sum-track" aria-hidden="true"><i style="width:${a * 20}%"></i></div><span class="sum-val"><strong>${a.toFixed(1)} ${t('of 5', 'из 5')}</strong></span></div>` : ''}</div>` : ''; };
+    const section = (title, body) => `<section class="st-card"><h2>${title}</h2>${body}</section>`;
+    const empty = `<p class="small">${t('No data yet.', 'Пока нет данных.')}</p>`;
+    $('#stats-view').innerHTML = `${head}<p class="intro">${t('Only totals are collected: no names, no IP addresses, no cookies. The numbers update once a minute.', 'Собираются только общие суммы: без имён, IP-адресов и cookies. Цифры обновляются раз в минуту.')}</p>
+<div class="st-tiles">${tile(fmt(n('visits')), t('visits', 'посещений'))}${tile(fmt(done), t('exercises completed', 'практик пройдено'))}${tile(fmt(runs), t('scam trainer runs', 'раз пройден тренажёр'))}${tile(avgScore === null ? '—' : avgScore.toFixed(1) + ' / 10', t('average trainer score', 'средний результат тренажёра'))}${tile(fmt(n('visits:installed')), t('visits from the installed app', 'посещений из установленного приложения'))}</div>
+${section(t('Visits in the last 30 days', 'Посещения за последние 30 дней'), days.some(d => d[1]) ? vbars(days, 5) : empty)}
+${section(t('Exercises', 'Практики'), lessonRows.length ? `<div class="st-table-wrap"><table class="st-table"><thead><tr><th scope="col">${t('Exercise', 'Практика')}</th><th scope="col">${t('Started', 'Начали')}</th><th scope="col">${t('Completed', 'Прошли')}</th><th scope="col">${t('Share', 'Доля')}</th></tr></thead><tbody>${lessonRows.map(([id, st, dn]) => `<tr><th scope="row">${getTask(id).title}</th><td>${fmt(st)}</td><td>${fmt(dn)}</td><td><span class="st-rate"><i style="width:${st ? Math.min(100, dn / st * 100) : 0}%" aria-hidden="true"></i></span>${st ? Math.round(Math.min(100, dn / st * 100)) + '%' : '—'}</td></tr>`).join('')}</tbody></table></div>` : empty)}
+<div class="st-grid">${section(t('Devices in exercises', 'Устройства в практиках'), hbars([['iPhone', n('os:ios')], ['Android', n('os:android')], ['Windows', n('os:windows')], ['Mac', n('os:mac')]]))}${section(t('Site language', 'Язык сайта'), hbars([[t('Russian', 'Русский'), n('lang:ru')], [t('Kazakh', 'Казахский'), n('lang:kk')], [t('English', 'Английский'), n('lang:en')]]))}</div>
+${section(t('Average confidence, 1 to 5', 'Средняя уверенность, от 1 до 5'), (confRow('phone', t('Phone', 'Телефон')) + confRow('computer', t('Computer', 'Компьютер'))) || empty)}
+${section(t('Scam trainer: right answers out of 10', 'Тренажёр: верных ответов из 10'), runs ? vbars([...Array(11).keys()].map(k => [String(k), n('trainer:score:' + k)])) : empty)}
+${statsData.storage === 'memory' ? `<p class="small">${t('Statistics storage is not connected: the numbers are kept in server memory and reset when the server restarts.', 'Хранилище статистики не подключено: цифры хранятся в памяти сервера и обнуляются при его перезапуске.')}</p>` : ''}`;
+    if (focus) focusTitle('#stats-title');
+  }
   function showProject() { showView('project'); renderProject(true); }
   /* ---------- “grandchild mode”: a link straight to one exercise, e.g. #lesson/whatsapp/ios ---------- */
   let inviteId = null;
@@ -728,6 +783,7 @@ ${installHTML()}<p class="project-foot">${t('Sources of the app icons are listed
   }
   async function shareLesson(id) {
     const url = lessonLink(id), title = getTask(id).title;
+    track('share', {id});
     const text = t(`Try this practice exercise: “${title}”. Free, no registration.`, `Попробуйте эту практику: «${title}». Бесплатно и без регистрации.`);
     if (navigator.share) {
       try { await navigator.share({title, text, url}); return; } catch (error) { if (error && error.name === 'AbortError') return; }
@@ -785,6 +841,7 @@ ${installHTML()}<p class="project-foot">${t('Sources of the app icons are listed
   }
   function completeTask() {
     const id = active.id;
+    track('done', {id});
     if (!state.progress[state.device].includes(id)) state.progress[state.device].push(id);
     persist();
     active.completed = true;
@@ -890,8 +947,10 @@ ${installHTML()}<p class="project-foot">${t('Sources of the app icons are listed
       case 'install': if (installPrompt) { installPrompt.prompt(); installPrompt.userChoice.finally(() => { installPrompt = null; if (currentView === 'project') renderProject(); }); } break;
       case 'share': shareLesson(button.dataset.id); break;
       case 'trainer': showTrainer(); break;
+      case 'stats': showStats(); break;
+      case 'stats-reload': statsData = null; showStats(); break;
       case 'trainer-answer': if (trainer && trainer.picked === null) { trainer.picked = button.dataset.v === 'scam'; trainer.answers[trainer.i] = trainer.picked === trainerItems()[trainer.i].scam; renderTrainer(true); } break;
-      case 'trainer-next': if (trainer) { trainer.i++; trainer.picked = null; renderTrainer(true); window.scrollTo({top: 0, behavior: 'instant'}); } break;
+      case 'trainer-next': if (trainer) { trainer.i++; trainer.picked = null; if (trainer.i === trainerItems().length) track('trainer', {score: trainer.answers.filter(Boolean).length}); renderTrainer(true); window.scrollTo({top: 0, behavior: 'instant'}); } break;
       case 'certificate': if (active) showCertificate(active.id); break;
       case 'certificate-back': showView('training'); renderCompletion(true); break;
       case 'hint': active.hint = !active.hint; $('#step-hint').hidden = !active.hint; button.setAttribute('aria-expanded', String(active.hint)); markTarget(); break;
@@ -923,6 +982,11 @@ ${installHTML()}<p class="project-foot">${t('Sources of the app icons are listed
     if (state.save) { if (persist()) setLocalizedStatus('storage-status', () => t('Progress and confidence ratings will be saved in this browser. Survey answers are not saved.', 'Прогресс и отметки уверенности будут сохранены в этом браузере. Анкета не сохраняется.')); }
     else { try { localStorage.removeItem(key); setLocalizedStatus('storage-status', () => t('Saving is off. Your progress is available until you reload the page.', 'Сохранение выключено. Прогресс доступен до обновления страницы.')); } catch (_) { setLocalizedStatus('storage-status', () => t('Saving is off. The browser did not allow its storage to be cleared. You can clear it in your browser settings.', 'Сохранение выключено. Браузер не разрешил очистить хранилище; его можно очистить в настройках браузера.')); } }
     announce($('#storage-status').textContent);
+  });
+  document.addEventListener('change', event => {
+    if (event.target.id !== 'stats-off') return;
+    try { if (event.target.checked) localStorage.setItem(noStatsKey, '1'); else localStorage.removeItem(noStatsKey); } catch (_) { /* the choice lasts until reload */ }
+    announce(event.target.checked ? t('Statistics will not be sent from this browser.', 'Статистика из этого браузера отправляться не будет.') : t('Anonymous statistics are on.', 'Анонимная статистика включена.'));
   });
   document.addEventListener('input', event => {
     if (event.target.id !== 'cert-name' || !certificate) return;
@@ -962,7 +1026,7 @@ ${installHTML()}<p class="project-foot">${t('Sources of the app icons are listed
     event.preventDefault(); const form = event.target;
     const selected = $$('input:checked', form);
     if (!selected.length) { setLocalizedStatus('confidence-status', () => t('Choose a rating or select “Skip”.', 'Выберите отметку или нажмите «Пропустить».')); return; }
-    selected.forEach(input => { state.ratings[state.device][input.name] = Number(input.value); }); persist();
+    selected.forEach(input => { state.ratings[state.device][input.name] = Number(input.value); track('confidence', {device: state.device, phase: input.name, value: Number(input.value)}); }); persist();
     const task = confidenceContext?.task;
     if (task) beginTask(task, true);
     else if (state.ratings[state.device].after) showSummary();
@@ -1019,6 +1083,8 @@ ${installHTML()}<p class="project-foot">${t('Sources of the app icons are listed
       const keep = $('#chat-q') ? $('#chat-q').value : ''; renderChat(); if ($('#chat-q')) $('#chat-q').value = keep;
     } else if (currentView === 'certificate' && certificate) {
       renderCertificate();
+    } else if (currentView === 'stats') {
+      renderStats();
     } else if (currentView === 'trainer' && trainer) {
       renderTrainer();
     } else if (currentView === 'invite') {
@@ -1042,10 +1108,11 @@ ${installHTML()}<p class="project-foot">${t('Sources of the app icons are listed
   refreshFontLabel();
   refreshContrastLabel();
   refreshOffline();
-  /* direct links: #survey, #project, #summary, #trainer, #practices, #about, #cheatsheet/<lesson>, #lesson/<lesson>/<os> */
+  try { if (!sessionStorage.getItem('uverenny-shag-visit')) { sessionStorage.setItem('uverenny-shag-visit', '1'); track('visit', {lang: window.CSLocale.lang, installed: standalone()}); } } catch (_) { track('visit', {lang: window.CSLocale.lang, installed: standalone()}); }
+  /* direct links: #survey, #project, #summary, #trainer, #stats, #practices, #about, #cheatsheet/<lesson>, #lesson/<lesson>/<os> */
   function route() {
     const hash = location.hash;
-    if (hash === '#survey') showSurvey(); else if (hash === '#project') showProject(); else if (hash === '#summary') showSummary(); else if (hash === '#trainer') showTrainer(); else if (hash === '#practices') home('practices'); else if (hash === '#about') home('about');
+    if (hash === '#survey') showSurvey(); else if (hash === '#project') showProject(); else if (hash === '#summary') showSummary(); else if (hash === '#trainer') showTrainer(); else if (hash === '#stats') showStats(); else if (hash === '#practices') home('practices'); else if (hash === '#about') home('about');
     else if (hash.startsWith('#cheatsheet/')) showCheatsheet(hash.slice(12));
     else if (hash.startsWith('#lesson/')) { const [id, os] = hash.slice(8).split('/'); showInvite(id, os); }
   }

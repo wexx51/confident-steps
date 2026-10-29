@@ -7,7 +7,8 @@
  *   or ANTHROPIC_API_KEY=sk-ant-...  node server.js   (paid Claude API)
  *
  * Optional env: FALLBACK_MODELS (comma list, tried when MODEL is busy), PORT (3000), MODEL (default gemini-3.8-flash / claude-haiku-5-5), ALLOWED_ORIGIN (CORS, only if the site is hosted elsewhere),
- *               RATE_PER_MIN (12 requests per IP per minute), DAILY_LIMIT (500 requests per day for everyone).
+ *               RATE_PER_MIN (12 requests per IP per minute), DAILY_LIMIT (500 requests per day for everyone),
+ *               UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN (free Upstash Redis for anonymous statistics).
  * Node 18+ is required. No npm packages.
  */
 const http = require('http');
@@ -53,6 +54,69 @@ setInterval(() => { const now = Date.now(); for (const [ip, l] of hits) if (!l.s
 function send(res, code, body, headers = {}) {
   res.writeHead(code, Object.assign({'Content-Type': 'application/json; charset=utf-8'}, ORIGIN ? {'Access-Control-Allow-Origin': ORIGIN, 'Access-Control-Allow-Headers': 'Content-Type'} : {}, headers));
   res.end(typeof body === 'string' ? body : JSON.stringify(body));
+}
+
+/* ---------- anonymous statistics: only totals are kept, no IP, no ids, no cookies, no texts ----------
+ * Stored in Upstash Redis when UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are set (free tier, survives
+ * Render restarts), otherwise in memory (lost on restart; fine for local testing).
+ * Keys: hash cs:stats (field -> count) and hash cs:days (YYYY-MM-DD -> visits).
+ * New exercises must be added to LESSONS, other ids are ignored. */
+const UP_URL = process.env.UPSTASH_REDIS_REST_URL, UP_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+const LESSONS = ['text', 'address', 'file', 'message', 'egov', 'whatsapp', 'telegram', 'phone', 'internet', 'kaspi', 'kaspiqr', 'bankcall', 'tgscam'];
+const OSES = ['ios', 'android', 'windows', 'mac'], LANGS = ['ru', 'en', 'kk'];
+const memStats = new Map(), memDays = new Map();
+const statHits = new Map();
+let statCache = null;
+setInterval(() => statHits.clear(), 60000).unref();
+async function upstash(commands) {
+  const r = await fetch(UP_URL.replace(/\/$/, '') + '/pipeline', {method: 'POST', headers: {authorization: 'Bearer ' + UP_TOKEN, 'content-type': 'application/json'}, body: JSON.stringify(commands), signal: AbortSignal.timeout(5000)});
+  if (!r.ok) throw new Error('upstash ' + r.status);
+  return r.json();
+}
+/* turns one event from the page into counter names; anything unexpected gives no counters */
+function counters(e) {
+  const lesson = LESSONS.includes(e.id) ? e.id : null, os = OSES.includes(e.os) ? e.os : null;
+  switch (e.e) {
+    case 'visit': return ['visits', ...(LANGS.includes(e.lang) ? ['lang:' + e.lang] : []), ...(e.installed === true ? ['visits:installed'] : [])];
+    case 'start': return lesson && os ? ['start:' + lesson, 'os:' + os] : [];
+    case 'done': return lesson ? ['done:' + lesson] : [];
+    case 'trainer': return Number.isInteger(e.score) && e.score >= 0 && e.score <= 10 ? ['trainer:runs', 'trainer:score:' + e.score] : [];
+    case 'confidence': return ['before', 'after'].includes(e.phase) && Number.isInteger(e.value) && e.value >= 1 && e.value <= 5 && ['phone', 'computer'].includes(e.device) ? [`conf:${e.device}:${e.phase}:${e.value}`] : [];
+    case 'share': case 'cheatsheet': case 'certificate': return lesson ? [e.e + ':' + lesson] : [];
+    default: return [];
+  }
+}
+async function handleStatsPost(req, res) {
+  const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+  const n = (statHits.get(ip) || 0) + 1; statHits.set(ip, n);
+  /* 120 events a minute per address leaves room for a whole class behind one school Wi-Fi */
+  if (n > 120) return send(res, 429, {error: 'too many requests'});
+  let raw = '';
+  for await (const chunk of req) { raw += chunk; if (raw.length > 600) return send(res, 413, {error: 'too large'}); }
+  let names;
+  try { names = counters(JSON.parse(raw)); } catch (_) { return send(res, 400, {error: 'bad json'}); }
+  if (!names.length) return send(res, 204, '');
+  const today = new Date().toISOString().slice(0, 10), visit = names.includes('visits');
+  try {
+    if (UP_URL && UP_TOKEN) await upstash([...names.map(f => ['HINCRBY', 'cs:stats', f, 1]), ...(visit ? [['HINCRBY', 'cs:days', today, 1]] : [])]);
+    else { names.forEach(f => memStats.set(f, (memStats.get(f) || 0) + 1)); if (visit) memDays.set(today, (memDays.get(today) || 0) + 1); }
+    statCache = null;
+    send(res, 204, '');
+  } catch (e) { console.error('stats', e.message); send(res, 502, {error: 'storage unavailable'}); }
+}
+async function handleStatsGet(res) {
+  if (statCache && Date.now() - statCache.at < 60000) return send(res, 200, statCache.body);
+  try {
+    let totals, days;
+    if (UP_URL && UP_TOKEN) {
+      const [a, b] = await upstash([['HGETALL', 'cs:stats'], ['HGETALL', 'cs:days']]);
+      const pairs = list => Object.fromEntries((list || []).reduce((acc, v, i, arr) => (i % 2 ? acc : [...acc, [v, Number(arr[i + 1])]]), []));
+      totals = pairs(a.result); days = pairs(b.result);
+    } else { totals = Object.fromEntries(memStats); days = Object.fromEntries(memDays); }
+    const recent = Object.keys(days).sort().slice(-30);
+    statCache = {at: Date.now(), body: {totals, days: Object.fromEntries(recent.map(d => [d, days[d]])), storage: UP_URL && UP_TOKEN ? 'upstash' : 'memory', lessons: LESSONS}};
+    send(res, 200, statCache.body);
+  } catch (e) { console.error('stats', e.message); send(res, 502, {error: 'storage unavailable'}); }
 }
 
 async function handleAI(req, res) {
@@ -113,6 +177,11 @@ http.createServer((req, res) => {
     if (req.method === 'OPTIONS') return send(res, 204, '');
     if (req.method === 'POST') return handleAI(req, res);
     return send(res, 405, {error: 'POST only'});
+  }
+  if (url.pathname === '/api/stats') {
+    if (req.method === 'POST') return handleStatsPost(req, res);
+    if (req.method === 'GET') return handleStatsGet(res);
+    return send(res, 405, {error: 'GET or POST only'});
   }
   if (url.pathname === '/sw.js') {
     const code = fs.readFileSync(path.join(PUBLIC, 'sw.js'), 'utf8').replace('__VERSION__', OFFLINE.version).replace('__FILES__', JSON.stringify(OFFLINE.urls));
