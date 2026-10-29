@@ -10,10 +10,11 @@
   const key = 'uverenny-shag-v1';
   /* display preference, kept apart from progress so it works without the save switch */
   const contrastKey = 'uverenny-shag-contrast';
-  const lessonIds = ['egov', 'whatsapp', 'telegram', 'phone', 'internet'];
+  const lessonIds = ['egov', 'whatsapp', 'telegram', 'phone', 'internet', 'bankcall', 'tgscam'];
+  /* exercises that only make sense on a phone */
+  const phoneOnly = ['phone', 'message', 'file', 'bankcall', 'tgscam'];
   const taskIds = ['text', 'address', 'file', 'message', ...lessonIds];
-  /* phone basics is only for the phone version */
-  const ids = () => state.device === 'computer' ? taskIds.filter(x => x !== 'phone' && x !== 'message' && x !== 'file') : taskIds;
+  const ids = () => state.device === 'computer' ? taskIds.filter(x => !phoneOnly.includes(x)) : taskIds;
   const lessons = () => window.CSLessonsFactory({t, PH, esc, options, device: () => state.device, iconSrc: k => appIconSource(k, state.device === 'phone' ? state.os : (state.dos === 'mac' ? 'ios' : 'android'))});
 
   function getTask(id) {
@@ -105,7 +106,7 @@
     $('#progress-summary').textContent = t(`Completed ${state.progress[state.device].filter(x => ids().includes(x)).length} of ${ids().length} exercises · ${deviceLabel()}`, `Пройдено ${state.progress[state.device].filter(x => ids().includes(x)).length} из ${ids().length} практик · ${deviceLabel()}`);
     $('#task-grid').innerHTML = ids().map((id, index) => {
       const task = getTask(id), completed = state.progress[state.device].includes(id);
-      return `<article class="task-card${completed ? ' completed' : ''}"><div class="task-card-top"><span class="task-icon" aria-hidden="true">${task.icon}</span><span class="task-number">0${index + 1}</span></div><h3>${task.title}${completed ? `<small class="completed-tag">${t('✓ Completed', '✓ Пройдено')}</small>` : ''}</h3><p>${task.description}</p><button type="button" data-task="${id}" data-testid="task-${id}" aria-label="${completed ? t('Repeat exercise', 'Повторить практику') : t('Start exercise', 'Начать практику')}: ${task.title}">${completed ? t('Repeat exercise', 'Повторить практику') : t('Start exercise', 'Начать практику')} <span aria-hidden="true">↗</span></button><button class="cs-link" data-action="cheatsheet" data-id="${id}" data-testid="cheatsheet-${id}">${t('Cheat sheet to print', 'Шпаргалка для печати')}</button></article>`;
+      return `<article class="task-card${completed ? ' completed' : ''}"><div class="task-card-top"><span class="task-icon" aria-hidden="true">${task.icon}</span><span class="task-number">${String(index + 1).padStart(2, '0')}</span></div><h3>${task.title}${completed ? `<small class="completed-tag">${t('✓ Completed', '✓ Пройдено')}</small>` : ''}</h3><p>${task.description}</p><button type="button" data-task="${id}" data-testid="task-${id}" aria-label="${completed ? t('Repeat exercise', 'Повторить практику') : t('Start exercise', 'Начать практику')}: ${task.title}">${completed ? t('Repeat exercise', 'Повторить практику') : t('Start exercise', 'Начать практику')} <span aria-hidden="true">↗</span></button><button class="cs-link" data-action="cheatsheet" data-id="${id}" data-testid="cheatsheet-${id}">${t('Cheat sheet to print', 'Шпаргалка для печати')}</button></article>`;
     }).join('');
   }
 

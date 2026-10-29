@@ -880,3 +880,33 @@ html.high-contrast .tr-btn.danger:not(#_),html.high-contrast .tr-btn.safe:not(#_
 /* phones: situation, then the message, then the answer buttons */
 @media(max-width:760px){.trainer-view .training-layout{display:flex;flex-direction:column}.trainer-view .instruction-panel{display:contents}.trainer-view .step-progress{order:0}.trainer-view .tr-situation{order:1;margin-bottom:0}.trainer-view .tr-sim{order:2}.trainer-view .tr-answers,.trainer-view #trainer-feedback{order:3}.trainer-view .training-nav{order:4;margin-top:0}.trainer-view .safe-note{order:5}}
 @media(max-width:760px){.trainer-view .training-layout{align-items:stretch}.trainer-view .instruction-panel>*{width:100%;align-self:stretch}}
+/* phone call screens (incoming call, call in progress) */
+.cl-in,.cl-on{flex:1;display:flex;flex-direction:column;align-items:center;text-align:center;color:#fff;padding:18px 14px 8px;position:relative}
+.cl-num{font-size:26px;font-weight:500;letter-spacing:.01em;margin-top:6px}.cl-sub{font-size:14px;opacity:.85}.cl-label{font-size:14px;opacity:.85;margin-bottom:14px}
+.cl-in.ios{padding-top:40px}.cl-in.ios .cl-num{font-size:30px;font-weight:400}.cl-in.and .cl-num{margin-top:14px}
+.cl-btns{margin-top:auto;display:flex;justify-content:space-between;width:100%;padding:0 18px 18px}
+.cl-btn{border:0;background:transparent;color:#fff;display:flex;flex-direction:column;align-items:center;gap:7px;font-size:13px;padding:0}
+.cl-round{display:grid;place-items:center;width:66px;height:66px;border-radius:50%;font-style:normal}.cl-round.red{background:#eb4d3d}.cl-round.green{background:#34c759}.cl-in.and .cl-round.green{background:#1e8e3e}.cl-in.and .cl-round.red{background:#d93025}
+.cl-round.glass{background:rgba(255,255,255,.22);width:58px;height:58px}.cl-down{display:grid;transform:rotate(135deg)}
+.cl-say{margin:16px 0 10px;background:rgba(0,0,0,.35);border-radius:14px;padding:10px 12px;font-size:13.5px;line-height:1.4;text-align:left}
+.cl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 6px;width:100%;margin-top:auto}.cl-btn.small{font-size:11.5px}.cl-btn.end{margin:16px auto 6px}
+.cl-on.ios .cl-grid{grid-template-columns:repeat(3,1fr)}.cl-on.and .cl-round.glass{border-radius:20px;background:rgba(255,255,255,.18)}.cl-on.and .cl-round.red{width:76px;height:54px;border-radius:28px;background:#d93025}
+.cl-banner{position:absolute;top:4px;left:8px;right:8px;display:flex;gap:9px;align-items:center;text-align:left;background:rgba(245,245,245,.9);color:#000;border-radius:16px;padding:9px 11px;font-size:13px;line-height:1.3}.cl-banner small{display:block}.cl-banner-ic{flex:none;width:30px;height:30px;border-radius:8px;background:#34c759;display:grid;place-items:center}
+.cl-in.and .cl-banner{background:#fff;border-radius:20px}.cl-in.and .cl-banner-ic{border-radius:50%;background:#0b57d0}
+.cl-in.ios:has(.cl-banner){padding-top:96px}.cl-in.and:has(.cl-banner) .cl-label{margin-top:64px}
+/* phone app: recent calls */
+.mx-recents{background:#fff;color:#000}.cl-list{flex:1;min-height:0;overflow:hidden}
+.cl-row{display:flex;align-items:center;gap:12px;width:100%;border:0;background:transparent;text-align:left;padding:9px 14px;min-height:62px;border-bottom:.5px solid #e5e5ea}.cl-rt{flex:1;min-width:0;display:flex;flex-direction:column}.cl-rt strong{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cl-rt strong.red{color:#ff3b30}.cl-rt small{font-size:12.5px;color:#8e8e93}.cl-i{color:#007aff;font-size:20px}
+.mx-recents.and .cl-row{border-bottom:0}.mx-recents.and .cl-rt strong.red{color:#d93025}.cl-search{display:flex;align-items:center;gap:10px;margin:8px 12px;padding:12px 16px;border-radius:28px;background:#eef1f8;color:#444746;font-size:15px}.cl-search span{flex:1}
+.mx-recents.ios .mx-tabs.ph{background:rgba(248,248,248,.94)}
+/* Telegram: chat list header on iPhone, button-like header, settings list */
+.mx-ios-top.tg{color:#007aff;font-size:16px}.mx-fab.tg{background:#50a8eb;border-radius:50%}
+.mx-head-btn{border:0;width:100%;font:inherit;text-align:left;cursor:pointer}.mx-inline-link{border:0;background:transparent;padding:0;font:inherit;display:inline;text-align:left}
+.tg-compose-plain{background:#fff}.tg-sets{flex:1;background:#f1f2f6;overflow:hidden}.mx-tg.ios .tg-sets{background:#f2f2f7}
+.tg-sec{font-size:13px;color:#3a95d5;font-weight:600;padding:14px 16px 6px;margin:0}.mx-tg.ios .tg-sec{color:#6d6d72;font-weight:400;text-transform:uppercase;font-size:12px}
+.tg-set{display:flex;align-items:center;gap:8px;width:100%;border:0;background:#fff;padding:13px 16px;font-size:15px;text-align:left;color:#000;border-bottom:.5px solid #e6e6e6}.tg-set span{flex:1}.tg-set em{font-style:normal;color:#3a95d5;font-size:14px}.mx-tg.ios .tg-set em{color:#8e8e93}.tg-set i{font-style:normal;color:#c4c4c7;font-size:18px}
+/* Telegram chat list: grey time, blue counter on iPhone, green on Android, round pencil button */
+.mx-row.tg .mx-r1 time.u{color:#8e8e93}.mx-tg.ios .mx-row.tg .mx-r2 em{background:#007aff}.mx-tg.and .mx-row.tg .mx-r2 em{background:#4fae4e}.mx-tg.and .mx-row.tg .mx-r1 time.u{color:#8a979f}
+.mx-tg.and .mx-fab.tg{background:#5ca9e8!important;border-radius:50%}
+.mx-ios-top.tg strong{color:#000;font-size:17px;font-weight:600}.tg-ios-search{margin:8px 12px 6px;display:flex;align-items:center;gap:6px;background:#e9e9eb;border-radius:10px;padding:7px 10px;color:#8e8e93;font-size:15px}
+.mx-tg.ios .mx-list{background:#fff}

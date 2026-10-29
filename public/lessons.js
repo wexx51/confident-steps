@@ -92,6 +92,27 @@ window.CSLessonsFactory = H => {
     return `<div class="mx-tabs" aria-hidden="true">${tabs.map(([k, l, on]) => `<span class="${on ? 'on' : ''}"><b>${g(k, 'currentColor', 22)}</b>${l}</span>`).join('')}</div>`;
   };
   const tgTabs = () => isIos() ? `<div class="mx-tabs tg" aria-hidden="true">${[['person', t('Contacts', 'Контакты')], ['phone', t('Calls', 'Звонки')], ['chat', t('Chats', 'Чаты'), 1], ['gear', t('Settings', 'Настройки')]].map(([k, l, on]) => `<span class="${on ? 'on' : ''}"><b>${g(k, 'currentColor', 22)}</b>${l}</span>`).join('')}</div>` : '';
+  /* phone call screens: incoming call and the call in progress */
+  const hang = (c = '#fff', z = 30) => `<span class="cl-down">${g('phone', c, z)}</span>`;
+  const callIn = again => {
+    const ios = isIos();
+    const accept = [`You can decline unknown calls too. In this exercise we learn to spot a trick, so answer this time.`, `Незнакомые звонки можно и отклонять. Но в этом упражнении мы учимся распознавать обман, поэтому ответьте.`];
+    const answerAgain = [`Do not answer: it is the same number pressing you. Decline the call.`, `Не отвечайте: это тот же номер, который на вас давит. Отклоните вызов.`];
+    const banner = again ? `<div class="cl-banner"><span class="cl-banner-ic">${g('chat', '#fff', 16)}</span><span><b>${t('Bank', 'Банк')}</b><small>${t('Confirmation code: 4821. Do not tell it to anyone.', 'Код подтверждения: 4821. Никому не сообщайте его.')}</small></span></div>` : '';
+    const decline = act(`<i class="cl-round red">${hang()}</i><span>${t('Decline', 'Отклонить')}</span>`, again ? null : accept, 'cl-btn');
+    const answer = act(`<i class="cl-round green">${g('phone', '#fff', 30)}</i><span>${ios ? t('Accept', 'Принять') : t('Answer', 'Ответить')}</span>`, again ? answerAgain : null, 'cl-btn');
+    return `<div class="cl-in ${ios ? 'ios' : 'and'}">${banner}${ios ? '' : `<small class="cl-label">${t('Incoming call', 'Входящий вызов')}</small>${ava(g('person', '#fff', 40), '#7b8794', 76)}`}<strong class="cl-num">+7 727 ••• •• 00</strong><small class="cl-sub">${t('Kazakhstan', 'Казахстан')}</small><div class="cl-btns">${decline}${answer}</div></div>`;
+  };
+  const callOn = () => {
+    const ios = isIos();
+    const keep = [`That will not help: the caller keeps pressing you. End the call with the red button.`, `Это не поможет: собеседник продолжит давить. Завершите звонок красной кнопкой.`];
+    const keys = [`Do not type the code on the keypad: scammers can hear the tones. End the call.`, `Не набирайте код на клавиатуре: мошенники слышат сигналы кнопок. Завершите звонок.`];
+    const b = (k, label, wrong) => act(`<i class="cl-round glass">${g(k, '#fff', 26)}</i><span>${label}</span>`, wrong, 'cl-btn small');
+    const grid = ios
+      ? [b('vol', t('Speaker', 'Динамик'), keep), b('video', 'FaceTime', keep), b('mic', t('Mute', 'Выкл. звук'), keep), b('plus', t('Add', 'Добавить'), keep), b('dial', t('Keypad', 'Клавиши'), keys)]
+      : [b('dial', t('Keypad', 'Клавиатура'), keys), b('mic', t('Mute', 'Выкл. звук'), keep), b('vol', t('Speaker', 'Динамик'), keep), b('plus', t('Add call', 'Добавить'), keep), b('clock', t('Hold', 'Удерж.'), keep), b('video', t('Video', 'Видео'), keep)];
+    return `<div class="cl-on ${ios ? 'ios' : 'and'}"><strong class="cl-num">+7 727 ••• •• 00</strong><small class="cl-sub">00:47</small><div class="cl-say"><b>${t('Caller:', 'Собеседник:')}</b> ${t('“…tell me the code from SMS right now, or the loan will be approved!”', '«…назовите код из SMS прямо сейчас, иначе кредит одобрят!»')}</div><div class="cl-grid">${grid.join('')}</div>${act(`<i class="cl-round red">${hang()}</i><span>${t('End', 'Отбой')}</span>`, null, 'cl-btn end')}</div>`;
+  };
   /* browser: Chrome on Android, Safari on iPhone; on a computer the window already has an address bar */
   const br = (url, body, o = {}) => {
     if (H.device && H.device() === 'computer') return shell('br', `<div class="br-body">${body.replace(/<div class="br-kb"[\s\S]*?<\/div>$/, '')}</div>`);
@@ -342,6 +363,87 @@ window.CSLessonsFactory = H => {
           hint: ['“Not secure”, a strange address and urgency mean: close the tab and enter nothing.', '«Не защищено», странный адрес и спешка значат одно: закрыть вкладку и ничего не вводить.'],
           ok: ['Correct: the tab is closed, nothing was entered.', 'Верно: вкладка закрыта, ничего не введено.'], bar: ['Page', 'Страница'], skin: 'br', url: '!clinic-fast-help.top',
           view: () => br('clinic-fast-help.top', `<div class="br-info"><strong>⚠ ${t('Connection is not secure', 'Подключение не защищено')}</strong><p>${t('Do not enter passwords, ID numbers or card details on this site.', 'Не вводите на этом сайте пароли, ИИН и данные карты.')}</p>${act(t('Close tab', 'Закрыть вкладку'), null, 'br-close')}</div><div class="br-page"><h4>${t('Certificate in 5 minutes! ⏰ 04:59', 'Справка за 5 минут! ⏰ 04:59')}</h4>${act(`<small>${t('ID number (IIN)', 'ИИН')}</small><span>____________</span>`, [`The ID number is also personal data. Do not give it to unknown pages.`, `ИИН тоже личные данные. Незнакомым страницам их не дают.`], 'br-field')}<div class="br-field dis"><small>${t('Card number', 'Номер карты')}</small><span>•••• •••• •••• ••••</span></div>${act(t('Get the certificate', 'Получить справку'), [`Never. The address is strange and the page rushes you.`, `Нельзя. Адрес странный, а страница торопит.`], 'br-cta')}</div>`, {warn: true})}
+      ]
+    },
+
+    bankcall: {
+      icon: '☏', title: t('A call “from the bank”', 'Звонок «из банка»'),
+      description: t('Recognise a fake bank call, hang up and call the bank yourself.', 'Распознать поддельный звонок из банка, положить трубку и самим позвонить в банк.'),
+      takeaway: t('A real bank never asks for a code from SMS, a PIN or the card number by phone. Hang up and call the bank yourself on the number on your card or in the official app.', 'Настоящий банк никогда не спрашивает по телефону код из SMS, PIN-код или номер карты. Положите трубку и сами позвоните в банк по номеру с карты или из официального приложения.'),
+      steps: [
+        {title: ['Answer the call', 'Ответьте на звонок'], text: ['An unknown number is calling. Answer to hear what they want.', 'Звонит незнакомый номер. Ответьте, чтобы узнать, что хотят.'],
+          hint: ['The green button answers, the red one declines. Answering is not dangerous; what matters is what you say.', 'Зелёная кнопка отвечает, красная отклоняет. Ответить не опасно, важно то, что вы скажете.'],
+          ok: ['You answered. Listen carefully.', 'Вы ответили. Слушайте внимательно.'], bar: null, home: true,
+          view: () => callIn(false)},
+        {title: ['They ask for a code', 'У вас просят код'], text: ['The caller says: “Bank security service. Someone is taking a loan in your name. Tell me the code from SMS to cancel it.” What do you do?', 'Собеседник говорит: «Служба безопасности банка. На вас оформляют кредит. Назовите код из SMS, чтобы его отменить». Что вы сделаете?'],
+          hint: ['A bank never asks for an SMS code. The safest thing is to end the call at once with the red button.', 'Банк никогда не спрашивает код из SMS. Самое надёжное: сразу завершить звонок красной кнопкой.'],
+          ok: ['Right: you hung up. You don’t have to be polite to scammers.', 'Верно: вы положили трубку. С мошенниками не нужно быть вежливыми.'], bar: null, home: true,
+          view: () => callOn()},
+        {title: ['They call again', 'Звонят снова'], text: ['The same number calls again, and an SMS with a code has arrived. Do not answer.', 'Тот же номер звонит снова, а ещё пришло SMS с кодом. Не отвечайте.'],
+          hint: ['Scammers often call back and press you. Decline the call with the red button. The code in the SMS is for you only.', 'Мошенники часто перезванивают и давят. Отклоните вызов красной кнопкой. Код из SMS только для вас.'],
+          ok: ['Declined. Your money and code are safe.', 'Отклонено. Ваши деньги и код в безопасности.'], bar: null, home: true,
+          view: () => callIn(true)},
+        {title: ['Call the bank yourself', 'Позвоните в банк сами'], text: ['To check your card, call the bank on a number you trust. Choose the right contact.', 'Чтобы проверить карту, позвоните в банк по номеру, которому доверяете. Выберите нужный контакт.'],
+          hint: ['The right number is written on the back of your card and in the official bank app. Do not call back the number that called you.', 'Правильный номер написан на обратной стороне карты и в официальном приложении банка. Не перезванивайте на номер, который звонил вам.'],
+          ok: ['Correct. The bank will tell you if anything really happened.', 'Верно. В банке скажут, было ли что-то на самом деле.'], bar: ['Phone', 'Телефон'], skin: 'recents',
+          view: () => {
+            const ios = isIos();
+            const row = (a, name, sub, wrong, red) => act(`${a}<span class="cl-rt"><strong class="${red ? 'red' : ''}">${name}</strong><small>${sub}</small></span>${ios ? `<span class="cl-i">ⓘ</span>` : g('phone', '#0b57d0', 22)}`, wrong, 'cl-row');
+            const list = row(ava(g('person', '#fff', 22), '#a5abb6', 40), '+7 727 ••• •• 00', t('2 missed · today', '2 пропущенных · сегодня'), [`This is the number that called you. Never call it back.`, `Это номер, который вам звонил. Перезванивать на него нельзя.`], true)
+              + row(ava('Б', '#2f7d6d', 40), t('My bank', 'Мой банк'), t('number from the back of the card', 'номер с обратной стороны карты'))
+              + row(ava('А', '#e17f9b', 40), t('Aigerim (granddaughter)', 'Айгерим (внучка)'), t('yesterday', 'вчера'), [`This is your granddaughter. To check the card, you need the bank.`, `Это внучка. Чтобы проверить карту, нужен банк.`])
+              + row(ava(g('person', '#fff', 22), '#a5abb6', 40), '+7 700 ••• •• 19', t('“Bank” · from SMS', '«Банк» · из SMS'), [`A number from an SMS may belong to scammers. Take the number from your card or the official app.`, `Номер из SMS может принадлежать мошенникам. Берите номер с карты или из официального приложения.`]);
+            const tabs = ios ? [['star', t('Favourites', 'Избранное')], ['clock', t('Recents', 'Недавние'), 1], ['person', t('Contacts', 'Контакты')], ['dial', t('Keypad', 'Клавиши')]] : [['star', t('Favourites', 'Избранное')], ['clock', t('Recents', 'Недавние'), 1], ['person', t('Contacts', 'Контакты')]];
+            return shell('recents', `<div class="cl-top">${ios ? `<h3 class="mx-large">${t('Recents', 'Недавние')}</h3>` : `<div class="cl-search">${g('search', '#444746', 20)}<span>${t('Search contacts', 'Поиск контактов')}</span>${g('more', '#444746', 20)}</div>`}</div><div class="cl-list">${list}</div><div class="mx-tabs ph${ios ? ' ios' : ''}" aria-hidden="true">${tabs.map(([k, l, on]) => `<span class="${on ? 'on' : ''}"><b>${g(k, 'currentColor', 22)}</b>${l}</span>`).join('')}</div>`);
+          }}
+      ]
+    },
+
+    tgscam: {
+      icon: '⚑', title: t('A “vote for me” trick in Telegram', 'Обман «проголосуй» в Telegram'),
+      description: t('Do not open a suspicious link from a friend, check by calling, turn on a cloud password.', 'Не открывать подозрительную ссылку от знакомого, проверить звонком, включить облачный пароль.'),
+      takeaway: t('Even a message from a friend can come from scammers if their account was stolen. Do not log in through links, check by voice call, and turn on the cloud password in Telegram.', 'Даже сообщение от знакомого может прийти от мошенников, если его аккаунт украли. Не входите через ссылки, проверяйте голосовым звонком и включите облачный пароль в Telegram.'),
+      steps: [
+        {title: ['Open the message', 'Откройте сообщение'], text: ['Your friend Saule has written to you. Open the chat with her.', 'Вам написала знакомая Сауле. Откройте чат с ней.'],
+          hint: ['The chat with new messages has a number on the right. Tap the line with the name Saule.', 'У чата с новыми сообщениями справа есть число. Нажмите на строку с именем Сауле.'],
+          ok: ['The chat is open.', 'Чат открыт.'], bar: ['Chats', 'Чаты'], skin: 'tg',
+          view: () => {
+            const ios = isIos();
+            const top = ios
+              ? `<div class="mx-ios-top tg"><span>${t('Edit', 'Изм.')}</span><strong>${t('Chats', 'Чаты')}</strong><span class="mx-hi">${g('pencil', '#007aff', 22)}</span></div><div class="mx-search tg-ios-search">${g('search', '#8e8e93', 18)}<span>${t('Search', 'Поиск')}</span></div>`
+              : `<div class="mx-head mx-tg-head">${g('menu')}<span class="mx-ht"><strong>Telegram</strong></span><span class="mx-hi">${g('search', 'currentColor')}</span></div>`;
+            const rows = chatRow(ava('С', '#5fb3a1'), t('Saule', 'Сауле'), t('You need to log in with Telegram there…', 'Там надо войти через Telegram…'), '16:44', 2, null, 'tg')
+              + chatRow(ava('А', '#e17f9b'), t('Aigerim (granddaughter)', 'Айгерим (внучка)'), t('See you on Sunday!', 'Увидимся в воскресенье!'), '12:38', 0, [`This is your granddaughter. The new message is from Saule.`, `Это внучка. Новое сообщение от Сауле.`], 'tg')
+              + chatRow(ava('У', '#2aabee'), `${t('Confident Steps', 'Уверенный шаг')} ${verified}`, t('One short tip every Monday', 'Один короткий совет каждый понедельник'), t('Mon', 'пн'), 0, [`This is a channel. The new message is from Saule.`, `Это канал. Новое сообщение от Сауле.`], 'tg');
+            return shell('tg', `${top}<div class="mx-list">${rows}</div>${tgTabs()}${ios ? '' : `<span class="mx-fab tg" aria-hidden="true">${g('pencil', '#fff', 22)}</span>`}`);
+          }},
+        {title: ['Don’t open the link', 'Не открывайте ссылку'], text: ['Saule asks you to vote by a link and “log in with Telegram”. Do not open it. Tap her name at the top to open her profile.', 'Сауле просит проголосовать по ссылке и «войти через Telegram». Не открывайте её. Нажмите на имя вверху, чтобы открыть профиль.'],
+          hint: ['Such “vote” pages ask for your Telegram code and steal the account. The name at the top of the chat opens the profile, where you can call.', 'Такие страницы «голосования» просят код от Telegram и крадут аккаунт. Имя вверху чата открывает профиль, оттуда можно позвонить.'],
+          ok: ['The profile is open. Now check by calling.', 'Профиль открыт. Теперь проверим звонком.'], bar: ['Saule', 'Сауле'], skin: 'tg',
+          view: () => {
+            const ios = isIos();
+            const head = chatHead('tg', t('Saule', 'Сауле'), t('online', 'в сети'), ava('С', '#5fb3a1', 36), ios ? '' : g('phone', 'currentColor', 20) + g('more', 'currentColor'))
+              .replace('<div class="mx-head', '<button type="button" data-sim="correct" data-testid="lesson-ok" class="mx-head mx-head-btn').replace(/<\/div>$/, '</button>');
+            const lnk = act('t-vote-konkurs.top', [`Do not open this link. Such pages ask for your Telegram code and take your account.`, `Эту ссылку открывать нельзя. Такие страницы просят код от Telegram и забирают аккаунт.`], 'tr-link mx-inline-link');
+            return shell('tg', `${head}<div class="mx-wall">${day(t('Today', 'Сегодня'))}${msg(`${t('Hi! Please vote for my niece in the drawing contest 🙏', 'Привет! Проголосуй, пожалуйста, за мою племянницу в конкурсе рисунков 🙏')} ${lnk}`, false, '16:44', 'tg')}${msg(t('You need to log in with Telegram there, it is quick', 'Там надо войти через Telegram, это быстро'), false, '16:44', 'tg')}</div>${ios ? `<div class="mx-compose tr-compose tg ios">${g('clip', '#8e8e93', 24)}<span class="tr-tg-field">${t('Message', 'Сообщение')}</span>${g('mic', '#8e8e93', 24)}</div>` : `<div class="mx-compose tr-compose tg"><span class="tr-tg-input">${g('emoji', '#8a979f', 24)}<span>${t('Message', 'Сообщение')}</span>${g('clip', '#8a979f', 22)}</span>${g('mic', '#8a979f', 24)}</div>`}`);
+          }},
+        {title: ['Check by calling', 'Проверьте звонком'], text: ['Call Saule by voice and ask if she really wrote to you.', 'Позвоните Сауле голосом и спросите, она ли писала.'],
+          hint: ['The “Call” button is under the photo. A voice call shows whether you are talking to the real person.', 'Кнопка «Звонок» под фотографией. Голосовой звонок покажет, говорите ли вы с настоящим человеком.'],
+          ok: ['Saule says she wrote nothing: her account was hacked. Good that you checked!', 'Сауле говорит, что ничего не писала: её аккаунт взломали. Хорошо, что вы проверили!'], bar: ['Profile', 'Профиль'], skin: 'tg',
+          view: () => {
+            const ios = isIos();
+            const no = w => [w[0], w[1]];
+            return shell('tg', `<div class="mx-prof${ios ? ' ios' : ''}"><div class="mx-prof-top">${g(ios ? 'chev' : 'back', 'currentColor', 24)}<span>${ios ? t('Edit', 'Изм.') : g('more', 'currentColor')}</span></div>${ava('С', '#5fb3a1', 84)}<h3>${t('Saule', 'Сауле')}</h3><small>${t('online', 'в сети')}</small></div><div class="mx-acts">${act(`${g('phone', 'currentColor')}<span>${t('Call', 'Звонок')}</span>`, null, 'mx-act')}${act(`${g('video', 'currentColor')}<span>${t('Video', 'Видео')}</span>`, no([`A video call works too, but a plain voice call is simpler. Press “Call”.`, `Видеозвонок тоже подойдёт, но обычный звонок проще. Нажмите «Звонок».`]), 'mx-act')}${act(`${g('bell', 'currentColor')}<span>${t('Mute', 'Звук')}</span>`, no([`This only turns off notifications. You need to call Saule.`, `Так только выключаются уведомления. Нужно позвонить Сауле.`]), 'mx-act')}<span class="mx-act" aria-hidden="true">${g('more', 'currentColor')}<span>${t('More', 'Ещё')}</span></span></div><div class="mx-card"><small>${t('mobile', 'мобильный')}</small><p>+7 707 ••• •• 32</p></div><div class="mx-card"><small>${t('username', 'имя пользователя')}</small><p>@saule_k</p></div>`);
+          }},
+        {title: ['Protect your account', 'Защитите свой аккаунт'], text: ['In Telegram settings, open Privacy and Security and turn on the cloud password.', 'В настройках Telegram откройте «Конфиденциальность» и включите облачный пароль.'],
+          hint: ['A cloud password is a second password. Even if someone learns the SMS code, they cannot log in without it.', 'Облачный пароль — это второй пароль. Даже если кто-то узнает код из SMS, без него войти не получится.'],
+          ok: ['Next, Telegram will ask you to come up with a password and a hint. Write the password down and keep it at home.', 'Дальше Telegram попросит придумать пароль и подсказку. Запишите пароль и храните его дома.'], bar: ['Privacy', 'Конфиденциальность'], skin: 'tg',
+          view: () => {
+            const ios = isIos();
+            const li = (label, value, wrong) => act(`<span>${label}</span><em>${value}</em>${ios ? '<i>›</i>' : ''}`, wrong, 'tg-set');
+            const other = [`This setting is about who sees your data. To protect the account you need “Cloud password”.`, `Этот пункт о том, кто видит ваши данные. Для защиты аккаунта нужен «Облачный пароль».`];
+            return shell('tg', `<div class="mx-head mx-tg-head${ios ? ' ios' : ''}">${ios ? `<span class="mx-hb mx-back-label">${g('chev', 'currentColor', 24)}<em>${t('Back', 'Назад')}</em></span>` : `<span class="mx-hb">${g('back')}</span>`}<span class="mx-ht"><strong>${t('Privacy and Security', 'Конфиденциальность')}</strong></span>${ios ? '<span class="mx-hb"></span>' : ''}</div><div class="tg-sets"><p class="tg-sec">${t('Security', 'Безопасность')}</p>${li(t('Cloud password', 'Облачный пароль'), t('Off', 'Выкл.'))}${li(t('Passcode', 'Код-пароль'), t('Off', 'Выкл.'), [`A passcode locks Telegram on this phone. To protect the account from other devices you need the “Cloud password”.`, `Код-пароль закрывает Telegram только на этом телефоне. От входа с чужих устройств защищает «Облачный пароль».`])}${li(t('Devices', 'Устройства'), '1', [`Here you can see where you are logged in. Useful, but first turn on the “Cloud password”.`, `Здесь видно, где выполнен вход. Полезно, но сначала включите «Облачный пароль».`])}<p class="tg-sec">${t('Privacy', 'Конфиденциальность')}</p>${li(t('Phone number', 'Номер телефона'), t('My contacts', 'Мои контакты'), other)}${li(t('Last seen', 'Время захода'), t('Everybody', 'Все'), other)}${li(t('Profile photo', 'Фотография профиля'), t('Everybody', 'Все'), other)}</div>`);
+          }}
       ]
     }
   };
