@@ -819,3 +819,5 @@ html.high-contrast .cs-num{background-color:#ffd400!important;color:#000!importa
 @media(max-width:760px){.project-view{padding-block:27px 45px}.project-view h1{font-size:2.1rem}.project-block{padding:20px 18px}.project-block li{font-size:.95rem}}
 /* five header links: the last one takes the full row in the two-column phone menu */
 @media(max-width:600px){.site-header nav a:last-child:nth-child(odd){grid-column:1/-1}}
+/* WhatsApp unknown-number card: buttons stack when the screen is narrow instead of touching the edge */
+.mx-sys-b{flex-wrap:wrap}.mx-sysbtn{flex:1 1 118px;white-space:nowrap}
