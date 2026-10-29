@@ -693,7 +693,7 @@
   function renderProject(focus = false) {
     const block = (title, items) => `<section class="project-block"><h2>${title}</h2><ul>${items.map(i => `<li>${i}</li>`).join('')}</ul></section>`;
     $('#project-view').innerHTML = `<button class="text-button back-link" data-action="home">${t('← Back to home', '← На главную')}</button><p class="eyebrow">${t('ABOUT THE PROJECT', 'О ПРОЕКТЕ')}</p><h1 id="project-title" tabindex="-1">${t('Confident Steps', 'Уверенный шаг')}</h1><p class="project-lead">${t('A free practice website for adults aged 55 and over. Here you can calmly try everyday digital tasks on practice screens that look like a phone or a computer: make text larger, open eGov, write in WhatsApp and Telegram, notice a suspicious message, search the internet safely.', 'Бесплатный сайт для практики для взрослых 55+. Здесь можно спокойно попробовать повседневные цифровые задачи на учебных экранах, похожих на телефон и компьютер: увеличить текст, открыть eGov, написать в WhatsApp и Telegram, распознать подозрительное сообщение, безопасно искать в интернете.')}</p>
-<div class="project-grid">${block(t('How it works', 'Как всё устроено'), [
+<div class="project-grid">${block(t('Who made it', 'Кто сделал'), ['Alibi', 'Zhanibek', 'Iskander', 'Nurdaulet'])}${block(t('How it works', 'Как всё устроено'), [
       t('No registration and no payment. Just open the site and practise.', 'Без регистрации и без оплаты. Откройте сайт и практикуйтесь.'),
       t('All screens are practice copies. Nothing is opened, changed or sent on your real phone or computer, so mistakes are safe.', 'Все экраны учебные. На вашем настоящем телефоне или компьютере ничего не открывается, не меняется и не отправляется, поэтому ошибаться не страшно.'),
       t('Every exercise has a hint, a printable cheat sheet and, after you finish, a learning certificate.', 'У каждой практики есть подсказка, шпаргалка для печати и учебный сертификат после прохождения.')
@@ -707,7 +707,8 @@
       t('“AA” in the header makes all text larger.', 'Кнопка «АА» в шапке делает весь текст крупнее.'),
       t('◐ turns on high contrast: black background, white text, yellow buttons.', 'Кнопка ◐ включает высокий контраст: чёрный фон, белый текст, жёлтые кнопки.'),
       t('“Read aloud” in each step uses the voice built into your browser.', 'Кнопка «Прочитать вслух» в каждом шаге использует голос, встроенный в ваш браузер.')
-    ])}${installHTML()}</div>`;
+    ])}</div>
+${installHTML()}`;
     if (focus) focusTitle('#project-title');
   }
   /* ---------- install on the phone and work offline ---------- */
