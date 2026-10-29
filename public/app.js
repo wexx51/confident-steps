@@ -10,9 +10,9 @@
   const key = 'uverenny-shag-v1';
   /* display preference, kept apart from progress so it works without the save switch */
   const contrastKey = 'uverenny-shag-contrast';
-  const lessonIds = ['egov', 'whatsapp', 'telegram', 'phone', 'internet', 'bankcall', 'tgscam'];
+  const lessonIds = ['egov', 'whatsapp', 'telegram', 'phone', 'internet', 'kaspi', 'kaspiqr', 'bankcall', 'tgscam'];
   /* exercises that only make sense on a phone */
-  const phoneOnly = ['phone', 'message', 'file', 'bankcall', 'tgscam'];
+  const phoneOnly = ['phone', 'message', 'file', 'kaspi', 'kaspiqr', 'bankcall', 'tgscam'];
   const taskIds = ['text', 'address', 'file', 'message', ...lessonIds];
   const ids = () => state.device === 'computer' ? taskIds.filter(x => !phoneOnly.includes(x)) : taskIds;
   const lessons = () => window.CSLessonsFactory({t, PH, esc, options, device: () => state.device, iconSrc: k => appIconSource(k, state.device === 'phone' ? state.os : (state.dos === 'mac' ? 'ios' : 'android'))});

@@ -113,6 +113,51 @@ window.CSLessonsFactory = H => {
       : [b('dial', t('Keypad', 'Клавиатура'), keys), b('mic', t('Mute', 'Выкл. звук'), keep), b('vol', t('Speaker', 'Динамик'), keep), b('plus', t('Add call', 'Добавить'), keep), b('clock', t('Hold', 'Удерж.'), keep), b('video', t('Video', 'Видео'), keep)];
     return `<div class="cl-on ${ios ? 'ios' : 'and'}"><strong class="cl-num">+7 727 ••• •• 00</strong><small class="cl-sub">00:47</small><div class="cl-say"><b>${t('Caller:', 'Собеседник:')}</b> ${t('“…tell me the code from SMS right now, or the loan will be approved!”', '«…назовите код из SMS прямо сейчас, иначе кредит одобрят!»')}</div><div class="cl-grid">${grid.join('')}</div>${act(`<i class="cl-round red">${hang()}</i><span>${t('End', 'Отбой')}</span>`, null, 'cl-btn end')}</div>`;
   };
+  /* Kaspi.kz screens, drawn after the author's reference screenshots (main screen, “To a Kaspi client”) */
+  const KI = {
+    cart: '<path d="M3 4h2.2l2.3 10.5h10.3L20 7.2H6.4"/><circle cx="9" cy="19" r="1.4"/><circle cx="17" cy="19" r="1.4"/>',
+    bank: '<rect x="3" y="7" width="14" height="10" rx="2"/><path d="M7 4.5h11a3 3 0 0 1 3 3V14"/>',
+    receipt: '<path d="M6 3h12v18l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4L6 21z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+    swap: '<path d="M4 9h15l-4-4M20 15H5l4 4"/>',
+    travel: '<rect x="3" y="7" width="18" height="13" rx="3"/><path d="M9 7V5h6v2M9 13c1.6 1.6 4.4 1.6 6 0"/>',
+    gov: '<path d="M3 10h18L12 4zM5.5 10v8M10 10v8M14 10v8M18.5 10v8M3 20h18"/>',
+    ads: '<rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M8.5 8h7M8.5 12h7M8.5 16h4"/>',
+    qr: '<path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2.5v2.5H14zM17.5 17.5H20V20h-2.5zM14 19v1M19 14h1"/>',
+    chat: '<path d="M4 5h16v11H9l-5 4z"/>', menu: '<path d="M4 7h16M4 12h16M4 17h16"/>', home: '<path d="M4 11 12 4l8 7v9h-5v-6H9v6H4z"/>',
+    search: '<circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/>', person: '<circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',
+    card: '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/>', globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+    down: '<path d="m6 9 6 6 6-6"/>', close: '<path d="M6 6l12 12M18 6 6 18"/>', chev: '<path d="M15 5l-7 7 7 7"/>'
+  };
+  const kIcon = (k, c = '#f14635', s = 28) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="${c}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${KI[k]}</svg>`;
+  const kHead = title => `<div class="kp-head">${kIcon('chev', '#1f1f1f', 26)}<strong>${title}</strong><span></span></div>`;
+  const kGold = () => `<span class="kp-gold">${kIcon('card', '#fff', 16)}</span>`;
+  /* main screen; target is the one control that is right in this step: 'transfers' or 'qr' */
+  const kHome = target => {
+    const to = target === 'qr' ? [' To pay at the checkout, tap “Kaspi QR” at the bottom.', ' Для оплаты на кассе нажмите «Kaspi QR» внизу.'] : [' To send money, tap “Transfers”.', ' Чтобы отправить деньги, нажмите «Переводы».'];
+    const why = {
+      shop: ['“Shop” is for buying goods on Kaspi.kz.', '«Магазин» — это покупки на Kaspi.kz.'], bank: ['“My Bank” shows your cards and accounts.', '«Мой Банк» показывает ваши карты и счета.'],
+      payments: ['“Payments” is for bills, phone and fines.', '«Платежи» — это оплата коммунальных услуг, связи и штрафов.'], transfers: ['“Transfers” is for sending money to a person.', '«Переводы» — чтобы отправить деньги человеку.'],
+      other: ['This is a different service.', 'Это другой сервис.']
+    };
+    const wrong = k => k === target ? null : [(why[k] || why.other)[0] + to[0], (why[k] || why.other)[1] + to[1]];
+    const svc = (k, icon, label) => act(`<span class="kp-ic">${icon}</span><span>${label}</span>`, wrong(k), 'kp-svc');
+    const tiles = svc('shop', kIcon('cart'), t('Shop', 'Магазин')) + svc('bank', kIcon('bank'), t('My Bank', 'Мой Банк')) + svc('payments', kIcon('receipt'), t('Payments', 'Платежи')) + svc('transfers', kIcon('swap'), t('Transfers', 'Переводы'))
+      + svc('magnum', '<b class="kp-mg">m</b>', 'Magnum') + svc('travel', kIcon('travel'), 'Travel') + svc('gov', kIcon('gov'), t('Gov services', 'Госуслуги')) + svc('ads', kIcon('ads'), t('Classifieds', 'Объявления'));
+    const tab = (k, label, on) => k === 'qr' ? act(`${kIcon('qr', '#8e8e93', 24)}<span>Kaspi QR</span>`, wrong('qr') && [`Kaspi QR is for paying in shops.${to[0]}`, `Kaspi QR нужен для оплаты в магазинах.${to[1]}`], 'kp-tabbtn') : `<span class="${on ? 'on' : ''}">${kIcon(k, on ? '#f14635' : '#8e8e93', 24)}<span>${label}</span></span>`;
+    return shell('kp', `<div class="kp-top"><span class="kp-search">${kIcon('search', '#8e8e93', 20)}<span>${t('Search Kaspi.kz', 'Поиск по Kaspi.kz')}</span></span>${kIcon('cart', '#8e8e93', 24)}</div><div class="kp-home"><div class="kp-banners" aria-hidden="true"><span class="b1">${t('Instalments', 'Рассрочка')}<b>0·0·12</b></span><span class="b2">Kaspi<b>Red</b></span><span class="b3"></span></div><div class="kp-grid">${tiles}</div><div class="kp-promo" aria-hidden="true"><span><b class="kp-badge">0·0·12</b>${t('Instalments 0%', 'Рассрочка 0%')}</span><span><b class="kp-badge">Red+</b>Kaspi Red+</span></div></div><div class="kp-tabs">${tab('home', t('Home', 'Главная'), true)}${tab('qr')}${tab('chat', t('Messages', 'Сообщения'))}${tab('menu', t('Services', 'Сервисы'))}</div>`);
+  };
+  /* payment confirmation after scanning; cancel=true when the right move is to cancel */
+  const kPay = (amount, wrong, cancel) => shell('kp', `${kHead(t('Payment', 'Оплата'))}<div class="kp-page"><div class="kp-sheet kp-paysheet"><span class="kp-shop-ic">Д</span><strong class="kp-shop">${t('Dostyk shop', 'Магазин «Достык»')}</strong><small class="kp-city">Kaspi QR · ${t('Astana', 'Астана')}</small><div class="kp-amount">${amount}&nbsp;₸</div><div class="kp-from">${kGold()}<span>Kaspi Gold</span><b>125&nbsp;000&nbsp;₸</b></div>${act(`${t('Pay', 'Оплатить')} ${amount}&nbsp;₸`, wrong, 'kp-btn')}${cancel ? act(t('Cancel', 'Отмена'), null, 'kp-cancel') : ''}</div></div>`);
+  /* a made-up QR picture: finder squares and a fixed pattern, it encodes nothing */
+  const qrArt = () => {
+    let cells = '';
+    const finder = (x, y) => `<rect x="${x}" y="${y}" width="7" height="7" fill="#000"/><rect x="${x + 1}" y="${y + 1}" width="5" height="5" fill="#fff"/><rect x="${x + 2}" y="${y + 2}" width="3" height="3" fill="#000"/>`;
+    for (let y = 0; y < 25; y++) for (let x = 0; x < 25; x++) {
+      const inFinder = (x < 8 && y < 8) || (x > 16 && y < 8) || (x < 8 && y > 16);
+      if (!inFinder && (x * 17 + y * 31 + x * y * 7) % 5 < 2) cells += `<rect x="${x}" y="${y}" width="1" height="1"/>`;
+    }
+    return `<svg viewBox="-1 -1 27 27" width="110" height="110" aria-hidden="true"><rect x="-1" y="-1" width="27" height="27" fill="#fff"/><g fill="#000">${cells}</g>${finder(0, 0)}${finder(18, 0)}${finder(0, 18)}</svg>`;
+  };
   /* browser: Chrome on Android, Safari on iPhone; on a computer the window already has an address bar */
   const br = (url, body, o = {}) => {
     if (H.device && H.device() === 'computer') return shell('br', `<div class="br-body">${body.replace(/<div class="br-kb"[\s\S]*?<\/div>$/, '')}</div>`);
@@ -444,6 +489,62 @@ window.CSLessonsFactory = H => {
             const other = [`This setting is about who sees your data. To protect the account you need “Cloud password”.`, `Этот пункт о том, кто видит ваши данные. Для защиты аккаунта нужен «Облачный пароль».`];
             return shell('tg', `<div class="mx-head mx-tg-head${ios ? ' ios' : ''}">${ios ? `<span class="mx-hb mx-back-label">${g('chev', 'currentColor', 24)}<em>${t('Back', 'Назад')}</em></span>` : `<span class="mx-hb">${g('back')}</span>`}<span class="mx-ht"><strong>${t('Privacy and Security', 'Конфиденциальность')}</strong></span>${ios ? '<span class="mx-hb"></span>' : ''}</div><div class="tg-sets"><p class="tg-sec">${t('Security', 'Безопасность')}</p>${li(t('Cloud password', 'Облачный пароль'), t('Off', 'Выкл.'))}${li(t('Passcode', 'Код-пароль'), t('Off', 'Выкл.'), [`A passcode locks Telegram on this phone. To protect the account from other devices you need the “Cloud password”.`, `Код-пароль закрывает Telegram только на этом телефоне. От входа с чужих устройств защищает «Облачный пароль».`])}${li(t('Devices', 'Устройства'), '1', [`Here you can see where you are logged in. Useful, but first turn on the “Cloud password”.`, `Здесь видно, где выполнен вход. Полезно, но сначала включите «Облачный пароль».`])}<p class="tg-sec">${t('Privacy', 'Конфиденциальность')}</p>${li(t('Phone number', 'Номер телефона'), t('My contacts', 'Мои контакты'), other)}${li(t('Last seen', 'Время захода'), t('Everybody', 'Все'), other)}${li(t('Profile photo', 'Фотография профиля'), t('Everybody', 'Все'), other)}</div>`);
           }}
+      ]
+    },
+
+    kaspi: {
+      icon: '₸', title: t('Send money in Kaspi by phone number', 'Перевод в Kaspi по номеру телефона'),
+      description: t('Open Kaspi.kz, choose a transfer to a Kaspi client and check the recipient’s name.', 'Открыть Kaspi.kz, выбрать перевод клиенту Kaspi и проверить имя получателя.'),
+      takeaway: t('Before pressing “Transfer”, always check the recipient’s name under the number. If the name is not the one you expect, do not send.', 'Перед кнопкой «Перевести» всегда сверяйте имя получателя под номером. Если имя не то, которое вы ждёте, не отправляйте.'),
+      steps: [
+        {title: ['Open Kaspi.kz', 'Откройте Kaspi.kz'], text: ['Find the red Kaspi.kz icon and open it.', 'Найдите красный значок Kaspi.kz и откройте его.'],
+          hint: ['Kaspi.kz is a red icon with a white circle and two figures. The name is under it.', 'Kaspi.kz: красный значок с белым кругом и двумя фигурками. Название подписано под ним.'],
+          ok: ['Kaspi.kz is open.', 'Kaspi.kz открыт.'], bar: null, home: true,
+          view: () => grid([appT('egov', 'eGov mobile', [`This is eGov, government services. You need the red Kaspi.kz icon.`, `Это eGov, госуслуги. Нужен красный значок Kaspi.kz.`]), appT('whatsapp', 'WhatsApp', notThis), appT('kaspi', 'Kaspi.kz'), known('camera', 'Camera', 'Камера', notThis), known('photos', 'Photos', 'Фото', notThis)])},
+        {title: ['Open “Transfers”', 'Откройте «Переводы»'], text: ['On the main screen, tap “Transfers”.', 'На главном экране нажмите «Переводы».'],
+          hint: ['“Transfers” has an icon with two arrows. “Payments” is for bills and phone top-ups, not for sending money to a person.', 'У «Переводов» значок с двумя стрелками. «Платежи» нужны для оплаты услуг и связи, а не для перевода человеку.'],
+          ok: ['Transfers are open.', 'Переводы открыты.'], bar: ['Kaspi.kz', 'Kaspi.kz'], skin: 'kp',
+          view: () => kHome('transfers')},
+        {title: ['Choose “To a Kaspi client”', 'Выберите «Клиенту Kaspi»'], text: ['Your granddaughter has Kaspi too. Choose a transfer to a Kaspi client.', 'У внучки тоже Kaspi. Выберите перевод клиенту Kaspi.'],
+          hint: ['If the person also uses Kaspi, choose “To a Kaspi client”: the money arrives at once and you can send it by phone number.', 'Если у человека тоже Kaspi, выбирайте «Клиенту Kaspi»: деньги приходят сразу, а отправить можно по номеру телефона.'],
+          ok: ['Now enter the number and check the name.', 'Теперь номер и проверка имени.'], bar: ['Transfers', 'Переводы'], skin: 'kp',
+          view: () => {
+            const other = [`This is a different kind of transfer. Your granddaughter uses Kaspi, so choose “To a Kaspi client”.`, `Это другой вид перевода. Внучка пользуется Kaspi, поэтому выберите «Клиенту Kaspi».`];
+            const row = (ic, label, wrong) => act(`<span class="kp-ric">${kIcon(ic)}</span><span>${label}</span><i>›</i>`, wrong, 'kp-row');
+            return shell('kp', `${kHead(t('Transfers', 'Переводы'))}<div class="kp-page"><div class="kp-card kp-list">${row('person', t('To a Kaspi client', 'Клиенту Kaspi'))}${row('swap', t('Between my accounts', 'Между своими счетами'), [`This moves money between your own accounts. To send to your granddaughter, choose “To a Kaspi client”.`, `Так деньги переводятся между вашими счетами. Чтобы отправить внучке, выберите «Клиенту Kaspi».`])}${row('card', t('To another bank’s card', 'На карту другого банка'), other)}${row('globe', t('International transfers', 'Международные переводы'), other)}</div></div>`);
+          }},
+        {title: ['Check the name and send', 'Проверьте имя и отправьте'], text: ['You are sending 5,000 ₸ to your granddaughter Aigerim S. The number is entered. Check the name under it, then press “Transfer”.', 'Вы переводите 5 000 ₸ внучке Айгерим С. Номер уже введён. Проверьте имя под ним и нажмите «Перевести».'],
+          hint: ['After you enter a number, Kaspi shows the recipient’s name on a gold strip. It must be the person you know. The blue button at the bottom sends the money.', 'После ввода номера Kaspi показывает имя получателя на золотой плашке. Это должен быть знакомый вам человек. Синяя кнопка внизу отправляет деньги.'],
+          ok: ['Sent! The name matched, so the money went to the right person.', 'Отправлено! Имя совпало, значит, деньги ушли нужному человеку.'], bar: ['To a Kaspi client', 'Клиенту Kaspi'], skin: 'kp',
+          view: () => {
+            const tab = (label, on, wrong) => on ? `<span class="on">${label}</span>` : act(label, wrong, 'kp-tab');
+            const tabs = `<div class="kp-seg">${tab(t('Phone', 'Телефон'), true)}${tab(t('Card', 'Карта'), false, [`The task is to send by phone number. The “Phone” tab is already open.`, `В задании перевод по номеру телефона. Вкладка «Телефон» уже открыта.`])}${tab(`${kIcon('qr', '#1f1f1f', 18)} Kaspi QR`, false, [`Kaspi QR is for paying in shops. Stay on “Phone”.`, `Kaspi QR нужен для оплаты в магазинах. Оставайтесь на «Телефон».`])}</div>`;
+            return shell('kp', `${kHead(t('To a Kaspi client', 'Клиенту Kaspi'))}<div class="kp-page"><div class="kp-from">${kGold()}<span>Kaspi Gold</span><b>125&nbsp;000&nbsp;₸</b></div><span class="kp-down">${kIcon('down', '#9a9a9a', 18)}</span><div class="kp-sheet">${tabs}<div class="kp-to"><div class="kp-field"><small>${t('Recipient’s phone number', 'Номер телефона получателя')}</small><span>+7 701 ••• •• 45</span></div><div class="kp-name"><span><b>${t('Aigerim S.', 'Айгерим С.')}</b><small>${t('The money will arrive on the Kaspi Gold card', 'Деньги поступят на карту Kaspi Gold')}</small></span>${ava('А', '#e17f9b', 36)}</div></div><div class="kp-field big">5&nbsp;000&nbsp;₸</div><div class="kp-field note">${t('For grandma’s gift', 'На подарок')}</div><div class="kp-chips"><span>${t('Thanks!', 'Рақмет!')}</span><span>${t('For lunch', 'За обед')}</span><span>${t('Paying back :)', 'Возвращаю :)')}</span></div>${act(t('Transfer 5,000 ₸', 'Перевести 5&nbsp;000&nbsp;₸'), null, 'kp-btn')}</div></div>`);
+          }}
+      ]
+    },
+
+    kaspiqr: {
+      icon: '▦', title: t('Pay in a shop with Kaspi QR', 'Оплата в магазине по Kaspi QR'),
+      description: t('Open Kaspi QR, scan the shop’s code, check the shop and the amount, then pay.', 'Открыть Kaspi QR, отсканировать код магазина, сверить магазин и сумму и оплатить.'),
+      takeaway: t('Before paying by QR, check two things: the shop’s name and the amount. If the amount is different from what the cashier said, cancel and ask again.', 'Перед оплатой по QR проверяйте две вещи: название магазина и сумму. Если сумма не та, что назвал кассир, отмените и переспросите.'),
+      steps: [
+        {title: ['Open Kaspi QR', 'Откройте Kaspi QR'], text: ['You are at the checkout in a shop and Kaspi.kz is open. Tap “Kaspi QR” at the bottom of the screen.', 'Вы на кассе в магазине, Kaspi.kz уже открыт. Нажмите «Kaspi QR» внизу экрана.'],
+          hint: ['Kaspi QR is the button with a square code at the bottom of the main screen. It opens the camera for paying.', 'Kaspi QR — кнопка с квадратным кодом внизу главного экрана. Она открывает камеру для оплаты.'],
+          ok: ['The camera for paying is open.', 'Камера для оплаты открыта.'], bar: ['Kaspi.kz', 'Kaspi.kz'], skin: 'kp',
+          view: () => kHome('qr')},
+        {title: ['Point at the code', 'Наведите на код'], text: ['Point the camera at the QR code on the counter. In this exercise, tap the code.', 'Наведите камеру на QR-код на кассе. В упражнении нажмите на код.'],
+          hint: ['In real life the camera reads the code by itself when it is inside the frame. Hold the phone still.', 'В жизни камера сама считывает код, когда он попадает в рамку. Держите телефон ровно.'],
+          ok: ['The code is read. Now check the payment.', 'Код считан. Теперь проверим оплату.'], bar: ['Kaspi QR', 'Kaspi QR'], scene: true,
+          view: () => PH.frame(PH.os, `<div class="kp-cam"><div class="kp-cam-top">${act(kIcon('close', '#fff', 26), [`This closes the camera. Point it at the code instead.`, `Так камера закроется. Лучше наведите её на код.`], 'kp-cam-x')}<strong>Kaspi QR</strong>${act(g('flash', '#fff', 24), [`The torch helps in the dark. Here it is light enough: point at the code.`, `Фонарик помогает в темноте. Здесь светло: наведите на код.`], 'kp-cam-x')}</div><p class="kp-cam-tip">${t('Point the camera at the QR code', 'Наведите камеру на QR-код')}</p><div class="kp-frame">${act(`<span class="kp-stand"><b>Kaspi QR</b>${qrArt()}<small>${t('Dostyk shop', 'Магазин «Достык»')}</small></span>`, null, 'kp-code')}</div></div>`, {dark: true})},
+        {title: ['Check the amount', 'Проверьте сумму'], text: ['The cashier said: 2,340 ₸. Look at the amount on the screen. If it is different, cancel.', 'Кассир сказал: 2 340 ₸. Посмотрите на сумму на экране. Если она другая, отмените.'],
+          hint: ['Compare digit by digit. 23,400 is ten times more than 2,340. Cancel with the cross or “Cancel” and ask the cashier to enter the amount again.', 'Сравнивайте по цифрам. 23 400 в десять раз больше, чем 2 340. Отмените крестиком или «Отмена» и попросите кассира ввести сумму заново.'],
+          ok: ['Right: the amount was wrong, you cancelled and nothing was paid. The cashier entered it again.', 'Верно: сумма была неправильная, вы отменили, ничего не оплачено. Кассир ввёл её заново.'], bar: ['Payment', 'Оплата'], skin: 'kp',
+          view: () => kPay('23&nbsp;400', [`The amount is 23,400 ₸, but the cashier said 2,340 ₸. Do not pay: cancel and ask again.`, `Сумма 23 400 ₸, а кассир назвал 2 340 ₸. Не оплачивайте: отмените и переспросите.`], true)},
+        {title: ['Pay', 'Оплатите'], text: ['Now the amount is 2,340 ₸ and the shop is “Dostyk”. Everything matches: press “Pay”.', 'Теперь сумма 2 340 ₸, магазин «Достык». Всё совпадает: нажмите «Оплатить».'],
+          hint: ['The blue button at the bottom pays. Check the shop and the amount once more before pressing.', 'Синяя кнопка внизу оплачивает. Ещё раз взгляните на магазин и сумму перед нажатием.'],
+          ok: ['Paid! The cashier will see the payment at once.', 'Оплачено! Кассир сразу увидит оплату.'], bar: ['Payment', 'Оплата'], skin: 'kp',
+          view: () => kPay('2&nbsp;340', null, false)}
       ]
     }
   };
