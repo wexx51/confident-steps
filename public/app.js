@@ -84,7 +84,7 @@
   function showView(view, scroll = true) {
     if (view !== currentView) stopSpeaking();
     currentView = view;
-    ['home', 'training', 'confidence', 'survey', 'chat', 'cheatsheet', 'certificate', 'project', 'summary'].forEach(name => { $('#' + name + '-view').hidden = name !== view; });
+    ['home', 'training', 'confidence', 'survey', 'chat', 'cheatsheet', 'certificate', 'project', 'summary', 'invite'].forEach(name => { $('#' + name + '-view').hidden = name !== view; });
     if (scroll) window.scrollTo({top: 0, behavior: 'instant'});
   }
   function home(section) {
@@ -644,7 +644,7 @@
   let cheatsheetId = null;
   function renderCheatsheet(focus = false) {
     const id = cheatsheetId, task = getTask(id);
-    $('#cheatsheet-view').innerHTML = `<div class="no-print cs-tools"><button class="text-button back-link" data-action="practices">${t('← All exercises', '← Все практики')}</button><div class="cs-actions"><button class="button primary" data-action="print" data-testid="print-cheatsheet">${t('Print', 'Распечатать')}</button><button class="button secondary" data-task="${id}">${t('Start this exercise', 'Начать эту практику')}</button></div><p class="small">${t(`The steps are for ${deviceLabel()}. To get them for another device, choose it on the home page.`, `Шаги написаны для устройства ${deviceLabel()}. Для другого устройства выберите его на главной странице.`)}</p></div><article class="cheatsheet"><p class="eyebrow">${t('CHEAT SHEET', 'ШПАРГАЛКА')} · ${deviceLabel().toUpperCase()}</p><h1 id="cheatsheet-title" tabindex="-1">${task.title}</h1><p class="cs-lead">${task.description}</p><ol class="cs-steps">${[0, 1, 2, 3].map(s => { const m = stepMeta(id, s); return `<li class="cs-step"><span class="cs-num" aria-hidden="true">${s + 1}</span><div><h2>${m.title}</h2><p>${m.text}</p><p class="cs-hint"><strong>${t('Hint:', 'Подсказка:')}</strong> ${m.hint}</p></div></li>`; }).join('')}</ol><div class="takeaway"><strong>${t('Remember', 'Запомните')}</strong><br>${task.takeaway}</div><p class="cs-foot">${t('Confident Steps · practice at your own pace. A learning aid, not an official instruction. Screens on your device may look a little different.', 'Уверенный шаг · практика без спешки. Учебная памятка, не официальная инструкция. На вашем устройстве экраны могут выглядеть немного иначе.')}</p></article>`;
+    $('#cheatsheet-view').innerHTML = `<div class="no-print cs-tools"><button class="text-button back-link" data-action="practices">${t('← All exercises', '← Все практики')}</button><div class="cs-actions"><button class="button primary" data-action="print" data-testid="print-cheatsheet">${t('Print', 'Распечатать')}</button><button class="button secondary" data-task="${id}">${t('Start this exercise', 'Начать эту практику')}</button>${shareButton(id)}</div>${shareStatus}<p class="small">${t(`The steps are for ${deviceLabel()}. To get them for another device, choose it on the home page.`, `Шаги написаны для устройства ${deviceLabel()}. Для другого устройства выберите его на главной странице.`)}</p></div><article class="cheatsheet"><p class="eyebrow">${t('CHEAT SHEET', 'ШПАРГАЛКА')} · ${deviceLabel().toUpperCase()}</p><h1 id="cheatsheet-title" tabindex="-1">${task.title}</h1><p class="cs-lead">${task.description}</p><ol class="cs-steps">${[0, 1, 2, 3].map(s => { const m = stepMeta(id, s); return `<li class="cs-step"><span class="cs-num" aria-hidden="true">${s + 1}</span><div><h2>${m.title}</h2><p>${m.text}</p><p class="cs-hint"><strong>${t('Hint:', 'Подсказка:')}</strong> ${m.hint}</p></div></li>`; }).join('')}</ol><div class="takeaway"><strong>${t('Remember', 'Запомните')}</strong><br>${task.takeaway}</div><p class="cs-foot">${t('Confident Steps · practice at your own pace. A learning aid, not an official instruction. Screens on your device may look a little different.', 'Уверенный шаг · практика без спешки. Учебная памятка, не официальная инструкция. На вашем устройстве экраны могут выглядеть немного иначе.')}</p></article>`;
     if (focus) focusTitle('#cheatsheet-title');
   }
   function showCheatsheet(id) {
@@ -695,6 +695,46 @@
     if (focus) focusTitle('#project-title');
   }
   function showProject() { showView('project'); renderProject(true); }
+  /* ---------- “grandchild mode”: a link straight to one exercise, e.g. #lesson/whatsapp/ios ---------- */
+  let inviteId = null;
+  function lessonLink(id) {
+    const url = new URL(location.href);
+    url.search = '?lang=' + window.CSLocale.lang;
+    url.hash = `lesson/${id}/${curOs()}`;
+    return url.href;
+  }
+  async function shareLesson(id) {
+    const url = lessonLink(id), title = getTask(id).title;
+    const text = t(`Try this practice exercise: “${title}”. Free, no registration.`, `Попробуйте эту практику: «${title}». Бесплатно и без регистрации.`);
+    if (navigator.share) {
+      try { await navigator.share({title, text, url}); return; } catch (error) { if (error && error.name === 'AbortError') return; }
+    }
+    let copied = false;
+    try { await navigator.clipboard.writeText(url); copied = true; } catch (_) { /* shown below for manual copying */ }
+    const box = $('#share-status');
+    if (!box) return;
+    box.hidden = false;
+    box.innerHTML = copied ? `<strong>${t('Link copied.', 'Ссылка скопирована.')}</strong> ${t('Paste it into WhatsApp or Telegram for your relative.', 'Вставьте её в WhatsApp или Telegram для близкого человека.')}` : `${t('Copy this link and send it:', 'Скопируйте эту ссылку и отправьте:')}<input type="text" readonly value="${esc(url)}" aria-label="${t('Link to the exercise', 'Ссылка на практику')}">`;
+    box.querySelector('input')?.select();
+    announce(box.textContent);
+  }
+  const shareButton = id => `<button class="button secondary" data-action="share" data-id="${id}" data-testid="share-lesson">${t('Share this exercise', 'Поделиться уроком')}</button>`;
+  const shareStatus = '<p id="share-status" class="share-status" role="status" hidden></p>';
+  function renderInvite(focus = false) {
+    const task = getTask(inviteId);
+    $('#invite-view').innerHTML = `<div class="invite-card"><p class="eyebrow">${t('SOMEONE SENT YOU AN EXERCISE', 'ВАМ ПРИСЛАЛИ ПРАКТИКУ')}</p><span class="task-icon invite-icon" aria-hidden="true">${task.icon}</span><h1 id="invite-title" tabindex="-1">${task.title}</h1><p class="invite-lead">${task.description}</p><ul class="invite-points"><li>${t(`4 short steps on a practice screen that looks like ${deviceLabel()}.`, `4 коротких шага на учебном экране, как на ${deviceLabel()}.`)}</li><li>${t('Nothing real is opened or sent. Mistakes are safe.', 'Ничего настоящего не открывается и не отправляется. Ошибаться не страшно.')}</li><li>${t('There is a hint on every step.', 'На каждом шаге есть подсказка.')}</li></ul><button class="button primary invite-start" data-task="${inviteId}" data-bypass="1" data-testid="invite-start">${t('Start', 'Начать')} <span aria-hidden="true">→</span></button><button class="text-button" data-action="practices">${t('See all exercises', 'Посмотреть все практики')}</button></div>`;
+    if (focus) focusTitle('#invite-title');
+  }
+  function showInvite(id, os) {
+    if (['ios', 'android'].includes(os)) { state.device = 'phone'; state.os = os; }
+    else if (['windows', 'mac'].includes(os)) { state.device = 'computer'; state.dos = os; }
+    if (!ids().includes(id) && taskIds.includes(id)) state.device = 'phone';
+    if (!ids().includes(id)) { home('practices'); return; }
+    persist();
+    inviteId = id;
+    showView('invite');
+    renderInvite(true);
+  }
   function completeTask() {
     const id = active.id;
     if (!state.progress[state.device].includes(id)) state.progress[state.device].push(id);
@@ -707,7 +747,7 @@
     stopSpeaking();
     const id = active.id;
     const next = ids().find(task => !state.progress[state.device].includes(task));
-    $('#training-view').innerHTML = `<button class="text-button back-link" data-action="practices">${t('← All exercises', '← Все практики')}</button><div class="finish-panel"><div class="finish-check" aria-hidden="true">✓</div><p class="eyebrow">${t('EXERCISE COMPLETE', 'ПРАКТИКА ЗАВЕРШЕНА')} · ${deviceLabel().toUpperCase()}</p><h1 id="training-title" tabindex="-1">${t('You have taken another step.', 'У вас получился ещё один шаг.')}</h1><p>${t(`You completed “${getTask(id).title.toLowerCase()}”. You can repeat it as often as you like.`, `Вы прошли практику «${getTask(id).title.toLowerCase()}». Её можно повторить столько раз, сколько вам удобно.`)}</p><div class="takeaway">${getTask(id).takeaway}</div><div class="finish-actions">${next ? `<button class="button primary" data-task="${next}" data-testid="next-practice">${t('Next exercise', 'Следующая практика')} <span aria-hidden="true">→</span></button>` : `<button class="button primary" data-action="practices">${t('All exercises', 'Все практики')} <span aria-hidden="true">→</span></button>`}<button class="button secondary" data-action="certificate" data-testid="open-certificate">${t('Get a certificate', 'Получить сертификат')}</button><button class="button secondary" data-action="confidence-after" data-testid="confidence-after">${t('Rate your confidence', 'Отметить уверенность')}</button><button class="text-button" data-task="${id}">${t('Repeat this exercise', 'Повторить эту практику')}</button><button class="text-button" data-action="cheatsheet" data-id="${id}">${t('Cheat sheet to print', 'Шпаргалка для печати')}</button></div>${id === 'message' ? `<div class="sc-offer"><strong>${t('Want more practice?', 'Хотите потренироваться ещё?')}</strong><p>${t('The helper can write a new made-up message for you to check.', 'Помощник придумает для вас новое учебное сообщение, а вы проверите его.')}</p><button class="button secondary" data-action="sc-new" data-testid="new-situation">${t('New situation from the helper', 'Новая ситуация от помощника')}</button></div>` : ''}<p class="mock-note">${t(`Completed ${state.progress[state.device].length} of ${ids().length} exercises for the ${state.device === 'phone' ? 'phone' : 'computer'}. This records completion; it does not measure your ability.`, `Пройдено ${state.progress[state.device].length} из ${ids().length} практик для ${state.device === 'phone' ? 'телефона' : 'компьютера'}. Это отметка прохождения, а не оценка способностей.`)}</p></div>`;
+    $('#training-view').innerHTML = `<button class="text-button back-link" data-action="practices">${t('← All exercises', '← Все практики')}</button><div class="finish-panel"><div class="finish-check" aria-hidden="true">✓</div><p class="eyebrow">${t('EXERCISE COMPLETE', 'ПРАКТИКА ЗАВЕРШЕНА')} · ${deviceLabel().toUpperCase()}</p><h1 id="training-title" tabindex="-1">${t('You have taken another step.', 'У вас получился ещё один шаг.')}</h1><p>${t(`You completed “${getTask(id).title.toLowerCase()}”. You can repeat it as often as you like.`, `Вы прошли практику «${getTask(id).title.toLowerCase()}». Её можно повторить столько раз, сколько вам удобно.`)}</p><div class="takeaway">${getTask(id).takeaway}</div><div class="finish-actions">${next ? `<button class="button primary" data-task="${next}" data-testid="next-practice">${t('Next exercise', 'Следующая практика')} <span aria-hidden="true">→</span></button>` : `<button class="button primary" data-action="practices">${t('All exercises', 'Все практики')} <span aria-hidden="true">→</span></button>`}<button class="button secondary" data-action="certificate" data-testid="open-certificate">${t('Get a certificate', 'Получить сертификат')}</button><button class="button secondary" data-action="confidence-after" data-testid="confidence-after">${t('Rate your confidence', 'Отметить уверенность')}</button><button class="text-button" data-task="${id}">${t('Repeat this exercise', 'Повторить эту практику')}</button><button class="text-button" data-action="cheatsheet" data-id="${id}">${t('Cheat sheet to print', 'Шпаргалка для печати')}</button></div><div class="share-row"><p>${t('Know someone who would find this useful? Send them a link straight to this exercise.', 'Кому-то из близких тоже пригодится? Отправьте ссылку прямо на эту практику.')}</p>${shareButton(id)}${shareStatus}</div>${id === 'message' ? `<div class="sc-offer"><strong>${t('Want more practice?', 'Хотите потренироваться ещё?')}</strong><p>${t('The helper can write a new made-up message for you to check.', 'Помощник придумает для вас новое учебное сообщение, а вы проверите его.')}</p><button class="button secondary" data-action="sc-new" data-testid="new-situation">${t('New situation from the helper', 'Новая ситуация от помощника')}</button></div>` : ''}<p class="mock-note">${t(`Completed ${state.progress[state.device].length} of ${ids().length} exercises for the ${state.device === 'phone' ? 'phone' : 'computer'}. This records completion; it does not measure your ability.`, `Пройдено ${state.progress[state.device].length} из ${ids().length} практик для ${state.device === 'phone' ? 'телефона' : 'компьютера'}. Это отметка прохождения, а не оценка способностей.`)}</p></div>`;
     if (focus) { window.scrollTo({top: 0, behavior: 'instant'}); focusTitle('#training-title'); }
   }
   function scale(phase, title) {
@@ -769,7 +809,7 @@
     const button = event.target.closest('[data-action],[data-task],[data-device],[data-sim],[data-os]');
     if (!button) return;
     if (button.tagName === 'A') event.preventDefault();
-    if (button.dataset.task) { beginTask(button.dataset.task); return; }
+    if (button.dataset.task) { beginTask(button.dataset.task, !!button.dataset.bypass); return; }
     if (button.dataset.os && !button.dataset.sim) { setOs(button.dataset.os); return; }
     if (button.dataset.device) { state.device = button.dataset.device; persist(); renderCards(); announce(t(`Selected: ${deviceName().toLowerCase()}. Progress is separate for each device.`, `Выбран ${deviceName().toLowerCase()}. Прогресс для каждого устройства отдельный.`)); return; }
     if (button.dataset.sim) { simAction(button.dataset.sim, button); return; }
@@ -798,6 +838,7 @@
       case 'speak': speakStep(); break;
       case 'cheatsheet': showCheatsheet(button.dataset.id); break;
       case 'print': window.print(); break;
+      case 'share': shareLesson(button.dataset.id); break;
       case 'certificate': if (active) showCertificate(active.id); break;
       case 'certificate-back': showView('training'); renderCompletion(true); break;
       case 'hint': active.hint = !active.hint; $('#step-hint').hidden = !active.hint; button.setAttribute('aria-expanded', String(active.hint)); markTarget(); break;
@@ -925,6 +966,8 @@
       const keep = $('#chat-q') ? $('#chat-q').value : ''; renderChat(); if ($('#chat-q')) $('#chat-q').value = keep;
     } else if (currentView === 'certificate' && certificate) {
       renderCertificate();
+    } else if (currentView === 'invite') {
+      renderInvite();
     } else if (currentView === 'summary') {
       renderSummary();
     } else if (currentView === 'project') {
@@ -942,11 +985,12 @@
   renderCards();
   refreshFontLabel();
   refreshContrastLabel();
-  /* direct links: #survey, #project, #summary, #practices, #about, #cheatsheet/<lesson> */
+  /* direct links: #survey, #project, #summary, #practices, #about, #cheatsheet/<lesson>, #lesson/<lesson>/<os> */
   function route() {
     const hash = location.hash;
     if (hash === '#survey') showSurvey(); else if (hash === '#project') showProject(); else if (hash === '#summary') showSummary(); else if (hash === '#practices') home('practices'); else if (hash === '#about') home('about');
     else if (hash.startsWith('#cheatsheet/')) showCheatsheet(hash.slice(12));
+    else if (hash.startsWith('#lesson/')) { const [id, os] = hash.slice(8).split('/'); showInvite(id, os); }
   }
   route();
   window.addEventListener('hashchange', route);
