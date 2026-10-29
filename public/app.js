@@ -8,6 +8,8 @@
   const esc = v => String(v).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
   const plain = v => String(v).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
   const key = 'uverenny-shag-v1';
+  /* display preference, kept apart from progress so it works without the save switch */
+  const contrastKey = 'uverenny-shag-contrast';
   const lessonIds = ['egov', 'whatsapp', 'telegram', 'phone', 'internet'];
   const taskIds = ['text', 'address', 'file', 'message', ...lessonIds];
   /* phone basics is only for the phone version */
@@ -657,6 +659,12 @@
         button.setAttribute('aria-label', enabled ? t('Restore normal text size', 'Вернуть обычный размер текста') : t('Make website text larger', 'Увеличить текст на сайте'));
         announce(enabled ? t('Large text is on.', 'Крупный текст включён.') : t('Normal text size is on.', 'Обычный размер текста включён.')); break;
       }
+      case 'contrast': {
+        const enabled = document.documentElement.classList.toggle('high-contrast');
+        try { localStorage.setItem(contrastKey, enabled ? '1' : '0'); } catch (_) { /* The mode still works until the page is reloaded. */ }
+        refreshContrastLabel();
+        announce(enabled ? t('High contrast is on.', 'Высокий контраст включён.') : t('Normal colours are on.', 'Обычные цвета включены.')); break;
+      }
       case 'hint': active.hint = !active.hint; $('#step-hint').hidden = !active.hint; button.setAttribute('aria-expanded', String(active.hint)); break;
       case 'previous': if (active.step > 0) { active.step--; active.feedback = null; active.tone = ''; active.hint = false; resetAssist(); renderTraining(true); } else home('practices'); break;
       case 'next': if (!active.valid[active.step]) return; if (active.step === 3) completeTask(); else { active.step++; active.feedback = null; active.tone = ''; active.hint = false; resetAssist(); renderTraining(true); } break;
@@ -755,6 +763,12 @@
     button?.setAttribute('aria-pressed', String(enabled));
     button?.setAttribute('aria-label', enabled ? t('Restore normal text size', 'Вернуть обычный размер текста') : t('Make website text larger', 'Увеличить текст на сайте'));
   }
+  function refreshContrastLabel() {
+    const enabled = document.documentElement.classList.contains('high-contrast');
+    const button = $('[data-action="contrast"]');
+    button?.setAttribute('aria-pressed', String(enabled));
+    button?.setAttribute('aria-label', enabled ? t('Turn off high contrast', 'Выключить высокий контраст') : t('Turn on high contrast', 'Включить высокий контраст'));
+  }
   document.addEventListener('cslanguagechange', () => {
     clearTimeout(announcementTimer);
     $('#global-status').textContent = '';
@@ -771,9 +785,11 @@
     refreshAgeNote();
     refreshStatuses();
     refreshFontLabel();
+    refreshContrastLabel();
   });
   renderCards();
   refreshFontLabel();
+  refreshContrastLabel();
   if (location.hash === '#survey') showSurvey(); else if (location.hash === '#practices') home('practices'); else if (location.hash === '#about') home('about');
 
   /* If an icon cannot load, fall back to the built-in open-licence glyph. */

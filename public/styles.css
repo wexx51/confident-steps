@@ -24,7 +24,7 @@ html.large-text{font-size:22px}body.large-text{font-size:1rem}
 .header-tools .font-button{margin-left:0;flex-shrink:0}
 @media(max-width:1100px){.header-inner{gap:18px}.site-header nav{gap:15px}.header-tools{gap:10px}.language-switch button{padding-inline:10px}}
 @media(max-width:1000px){.header-inner{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px 20px;padding-block:16px}.site-header nav{grid-column:1/-1;grid-row:2;margin-left:0;justify-content:space-between;border-top:1px solid var(--line);padding-top:7px;width:100%}.header-tools{justify-self:end}.brand{min-width:0}}
-@media(max-width:600px){.header-inner{grid-template-columns:minmax(0,1fr) auto;gap:10px 12px}.header-tools{display:contents}.header-tools .font-button{grid-column:2;grid-row:1;justify-self:end}.language-switch{grid-column:1/-1;grid-row:2;display:flex;width:100%}.language-switch button{flex:1;min-height:42px;font-size:.8rem}.site-header nav{grid-row:3;padding-top:6px}.brand{grid-column:1;grid-row:1;white-space:normal}.brand>span:last-child{min-width:0}.brand small{letter-spacing:.01em}}
+@media(max-width:600px){.header-inner{grid-template-columns:minmax(0,1fr) auto;gap:10px 12px}.header-tools{display:contents}.header-tools .view-tools{grid-column:2;grid-row:1;justify-self:end}.language-switch{grid-column:1/-1;grid-row:2;display:flex;width:100%}.language-switch button{flex:1;min-height:42px;font-size:.8rem}.site-header nav{grid-row:3;padding-top:6px}.brand{grid-column:1;grid-row:1;white-space:normal}.brand>span:last-child{min-width:0}.brand small{letter-spacing:.01em}}
 
 /* ============ Phone model choice (iPhone / Android) ============ */
 .os-line{display:flex;align-items:center;gap:12px 18px;flex-wrap:wrap;margin:-8px 0 26px;padding:14px 18px;background:#eef1e8;border:1px solid var(--line);border-radius:12px}
@@ -761,3 +761,21 @@ body.large-text .site-header nav{grid-column:1/-1;grid-row:2;margin-left:0;justi
 body.large-text .site-header nav a{flex:1;justify-content:center;text-align:center}
 body.large-text .header-tools{justify-self:end}
 @media(max-width:600px){.site-header nav,body.large-text .site-header nav{grid-row:3;display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-top:10px}.site-header nav a,body.large-text .site-header nav a{flex:none;min-height:54px;padding:8px 6px;font-size:1rem;line-height:1.2;white-space:normal;overflow-wrap:anywhere;hyphens:auto}.site-header .language-switch{grid-row:2}}
+/* view tools: text size + high contrast */
+.view-tools{display:flex;gap:8px;align-items:center}.contrast-button span{font-size:1.45rem;margin:0;line-height:1}
+/* high contrast: black background, white text, yellow actions. Practice screens keep their look and get a strong outline. */
+html.high-contrast{--cream:#000;--paper:#000;--ink:#fff;--teal:#ffd400;--teal-dark:#ffe666;--soft:#000;--muted:#fff;--line:#fff;--gold:#ffd400;--peach:#000;color-scheme:dark}
+html.high-contrast body{background:#000;color:#fff}
+html.high-contrast body :not(.phone-frame,.phone-frame *,.desk,.desk *,img,svg,svg *,.switch){background-color:#000!important;color:#fff!important;border-color:#fff!important;box-shadow:none!important;text-shadow:none!important}
+html.high-contrast :is(.phone-frame,.desk){outline:4px solid #ffd400;outline-offset:4px}
+html.high-contrast body a:not(.phone-frame *,.desk *),html.high-contrast body a:not(.phone-frame *,.desk *) *{color:#ffd400!important;text-decoration:underline!important}
+html.high-contrast :is(.button,.answer-button,.hint-button,.mock-icon-button,.font-button,.task-card button,.device-tabs button,.os-switch button,.language-switch button,.confidence-scale label,input,select,textarea):not(.phone-frame *,.desk *){border:2px solid #fff!important}
+html.high-contrast :is(.primary,[aria-pressed=true],.answer-button.correct):not(.phone-frame *,.desk *),html.high-contrast :is(.primary,[aria-pressed=true]):not(.phone-frame *,.desk *) *{background-color:#ffd400!important;color:#000!important;border-color:#ffd400!important}
+html.high-contrast .button.primary[disabled]:not(.phone-frame *),html.high-contrast .button.primary[disabled]:not(.phone-frame *) *{background-color:#000!important;color:#fff!important;border:2px dashed #fff!important;opacity:1}
+html.high-contrast body .text-button:not(.phone-frame *,.desk *){color:#ffd400!important}
+html.high-contrast .step-progress span{background-color:#666!important}html.high-contrast .step-progress span.done{background-color:#ffd400!important}
+html.high-contrast .switch{background:#000;border:2px solid #fff}html.high-contrast .switch:after{background:#fff}html.high-contrast .switch-label input:checked+.switch{background:#ffd400}html.high-contrast .switch-label input:checked+.switch:after{background:#000}
+html.high-contrast .confidence-scale label:has(input:checked),html.high-contrast .task-card.completed,html.high-contrast .feedback,html.high-contrast .hint-box,html.high-contrast .takeaway,html.high-contrast .notice{border:3px solid #ffd400!important}
+html.high-contrast :is(button,a,input,select,textarea,[tabindex="-1"]):focus-visible{outline:4px solid #ffd400!important;outline-offset:4px}
+html.high-contrast .hero-art{transform:none}html.high-contrast .little-dot,html.high-contrast .zoom-track i{background-color:#ffd400!important}
+html.high-contrast .button.primary[disabled]:not(.phone-frame *) *{border:0!important}

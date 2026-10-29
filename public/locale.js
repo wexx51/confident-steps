@@ -156,6 +156,8 @@
     s151: ['Practice at your own pace for adults 55+: clear steps on your phone and computer, safe practice screens, and room to try again.', 'Спокойная практика для взрослых 55+: понятные шаги на телефоне и компьютере, безопасные учебные экраны и возможность попробовать снова.'],
     s152: ['Website language', 'Язык сайта'],
     s200: ['AI helper', 'ИИ-помощник'],
+    s201: ['Turn on high contrast', 'Включить высокий контраст'],
+    s202: ['High contrast', 'Высокий контраст'],
     s153: ['Which phone do you have?', 'Какой у вас телефон?'],
     s154: ['Phone model', 'Модель телефона'],
     s155: ['The practice screens will look like your phone.', 'Учебные экраны будут выглядеть как на вашем телефоне.']
@@ -179,7 +181,7 @@
         if (node && node.nodeType === Node.TEXT_NODE) node.nodeValue = translate(entries[index]);
       });
     });
-    ['aria-label', 'content'].forEach(function (attribute) {
+    ['aria-label', 'content', 'title'].forEach(function (attribute) {
       document.querySelectorAll('[data-i18n-' + attribute + ']').forEach(function (element) {
         element.setAttribute(attribute, translate(element.getAttribute('data-i18n-' + attribute)));
       });
