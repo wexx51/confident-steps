@@ -330,6 +330,27 @@
     const ios = state.os === 'ios';
     return `<button type="button" class="set-row" data-sim="${action}" ${testid ? `data-testid="${testid}"` : ''}><span class="set-ic" style="--c:${color}">${PH.ic(icon, ios ? 18 : 22)}</span><span class="set-t"><strong>${title}</strong>${!ios && sub ? `<small>${sub}</small>` : ''}</span>${ios ? `<span class="set-chev">${PH.ic('chev', 16)}</span>` : ''}</button>`;
   }
+  /* Display screen of a real phone: iPhone “Display & Brightness” and Samsung One UI “Display”. Only the text-size row moves on. */
+  function displayScreen(ios) {
+    const tgl = on => `<span class="dsp-tgl${on ? ' on' : ''}" aria-hidden="true"><i></i></span>`;
+    const chev = `<span class="dsp-chev" aria-hidden="true">${PH.ic('chev', 16)}</span>`;
+    const row = (title, o = {}) => `<button type="button" class="dsp-row" data-sim="${o.action || 'retry-display'}"${o.testid ? ` data-testid="${o.testid}"` : ''}><span class="dsp-t"><strong>${title}</strong>${o.sub ? `<small>${o.sub}</small>` : ''}</span>${o.val ? `<span class="dsp-val">${o.val}</span>` : ''}${o.tgl !== undefined ? tgl(o.tgl) : ''}${o.chev ? chev : ''}</button>`;
+    const mode = (dark, label, on) => `<button type="button" class="dsp-mode" data-sim="retry-display"><span class="dsp-mini${dark ? ' dark' : ''}" aria-hidden="true"><b>9:41</b><i></i><i></i></span><span>${label}</span><span class="dsp-radio${on ? ' on' : ''}" aria-hidden="true"></span></button>`;
+    const sun = size => `<span class="dsp-sun" aria-hidden="true">${PH.ic('sun', size)}</span>`;
+    const bright = `<div class="dsp-bright" aria-hidden="true">${ios ? sun(16) : ''}<span class="dsp-trk"><i></i></span>${ios ? sun(22) : ''}</div>`;
+    const backBtn = `<button type="button" class="nb-back" data-sim="display-back" aria-label="${t('Back to Settings', 'Назад к настройкам')}">${PH.ic('back', ios ? 20 : 24)}${ios ? `<em>${t('Back', 'Назад')}</em>` : ''}</button>`;
+    if (ios) return `<div class="nav nav-ios dsp-nav">${backBtn}<strong>${t('Display & Brightness', 'Экран и яркость')}</strong><span></span></div><div class="dsp">`
+      + `<p class="dsp-cap">${t('APPEARANCE', 'ОФОРМЛЕНИЕ')}</p><div class="dsp-card"><div class="dsp-modes">${mode(false, t('Light', 'Светлое'), true)}${mode(true, t('Dark', 'Тёмное'), false)}</div>${row(t('Automatic', 'Автоматически'), {tgl: true})}${row(t('Options', 'Параметры'), {val: t('Light Until Sunset', 'Светлое до заката'), chev: true})}</div>`
+      + `<div class="dsp-card">${row(t('Text Size', 'Размер текста'), {action: 'correct', testid: 'sim-text-menu', chev: true})}${row(t('Bold Text', 'Жирный шрифт'), {tgl: false})}</div>`
+      + `<p class="dsp-cap">${t('BRIGHTNESS', 'ЯРКОСТЬ')}</p><div class="dsp-card">${bright}${row('True Tone', {tgl: true})}</div><p class="dsp-foot">${t('Automatically adapt iPhone display based on ambient lighting conditions to make colours appear consistent in different environments.', 'Автоматически адаптировать дисплей iPhone в зависимости от внешней освещённости, чтобы цвета отображались единообразно в различных световых условиях.')}</p>`
+      + `<div class="dsp-card">${row('Night Shift', {val: t('Sunset to Sunrise', 'От заката до рассвета'), chev: true})}</div><div class="dsp-card">${row(t('Auto-Lock', 'Автоблокировка'), {val: t('30 seconds', '30 с'), chev: true})}</div></div>`;
+    return `<div class="nav nav-and dsp-nav">${backBtn}<strong>${t('Display', 'Дисплей')}</strong></div><div class="dsp">`
+      + `<div class="dsp-card"><div class="dsp-modes">${mode(false, t('Light', 'Светлый'), true)}${mode(true, t('Dark', 'Тёмный'), false)}</div>${row(t('Dark mode settings', 'Настройки тёмного режима'))}</div>`
+      + `<div class="dsp-card"><p class="dsp-label">${t('Brightness', 'Яркость')}</p>${bright}${row(t('Adaptive brightness', 'Адаптивная яркость'), {tgl: true})}</div>`
+      + `<div class="dsp-card">${row(t('Motion smoothness', 'Плавность движений'), {sub: t('Adaptive', 'Адаптивная')})}${row(t('Eye comfort shield', 'Комфорт для глаз'), {sub: t('Off', 'Выключено'), tgl: false})}</div>`
+      + `<div class="dsp-card">${row(t('Font size and style', 'Размер и стиль шрифта'), {action: 'correct', testid: 'sim-text-menu'})}${row(t('Screen zoom', 'Масштабирование экрана'))}${row(t('Full screen apps', 'Полноэкранные приложения'))}</div>`
+      + `<div class="dsp-card">${row(t('Screen timeout', 'Время отключения экрана'), {sub: t('30 seconds', '30 секунд')})}</div></div>`;
+  }
   function browserShell(url, body, lock) {
     const ios = state.os === 'ios';
     const bar = ios
@@ -353,7 +374,7 @@
           text: phone ? t('Find the gear icon “Settings” on the home screen and tap it.', 'Найдите на главном экране значок шестерёнки «Настройки» и нажмите на него.') : state.dos === 'mac' ? t('Choose “View” in the Safari menu bar at the top of the screen.', 'В верхней строке меню Safari выберите «Вид».') : t('Select the three-dot menu at the top right of Chrome.', 'Нажмите на меню с тремя точками в правом верхнем углу Chrome.'),
           hint: phone ? t('A gear icon ⚙ means settings. The other icons open other apps. If you tap one by mistake, nothing will break.', 'Шестерёнка ⚙ означает настройки. Остальные значки открывают другие приложения. Если нажать не туда, ничего не сломается.') : state.dos === 'mac' ? t('Safari’s menus are in the macOS menu bar, above the browser window.', 'Меню Safari находятся в строке меню macOS над окном браузера.') : t('Three dots ⋮ open Chrome’s menu with more options.', 'Три точки ⋮ открывают меню Chrome с дополнительными действиями.')},
         {title: phone ? t('Find text size', 'Найдите размер текста') : t('Find zoom', 'Найдите масштаб'),
-          text: phone ? (ios ? t('In settings, tap “Display & Brightness”.', 'В настройках нажмите «Экран и яркость».') : t('In settings, tap “Display”.', 'В настройках нажмите «Дисплей».')) : t('In the open menu, select “Page zoom”.', 'В открытом меню выберите «Масштаб страницы».'),
+          text: phone ? (active.sub === 'display' ? (ios ? t('This is “Display & Brightness”. Now tap “Text Size”.', 'Это раздел «Экран и яркость». Теперь нажмите «Размер текста».') : t('This is “Display”. Scroll down and tap “Font size and style”.', 'Это раздел «Дисплей». Пролистайте экран вниз и нажмите «Размер и стиль шрифта».')) : ios ? t('First tap “Display & Brightness” in settings. Then choose “Text Size” inside it.', 'Сначала нажмите в настройках «Экран и яркость». Затем внутри выберите «Размер текста».') : t('First tap “Display” in settings. Then choose “Font size and style” inside it.', 'Сначала нажмите в настройках «Дисплей». Затем внутри выберите «Размер и стиль шрифта».')) : t('In the open menu, select “Page zoom”.', 'В открытом меню выберите «Масштаб страницы».'),
           hint: phone ? (ios ? t('On an iPhone, text size is inside “Display & Brightness”. On other phones the name may be different.', 'На iPhone размер текста находится в разделе «Экран и яркость». На других телефонах название может отличаться.') : t('On Android, look for “Display”. On some phones it is called “Screen” or “Accessibility”. Names differ between makers.', 'На Android ищите раздел «Дисплей». На некоторых телефонах он называется «Экран» или «Специальные возможности». У разных производителей названия отличаются.')) : t('Zoom makes everything on the page larger. In many real browsers, you can also use Ctrl and +, or Command and + on a Mac.', 'Масштаб увеличивает всё содержимое страницы. В реальном браузере также часто работают клавиши Ctrl и +, а на Mac — Command и +.')},
         {title: t('Increase text size to 120%', 'Увеличьте текст до 120%'), text: t('Select plus twice. Watch the text below the buttons change.', 'Нажмите плюс два раза. Посмотрите, как меняется текст.'), hint: t('Plus + makes it larger; minus − makes it smaller. You can try both. It is safe to make mistakes here.', 'Плюс + увеличивает, минус − уменьшает. Вы можете попробовать оба направления; ошибиться здесь безопасно.')},
         {title: t('Check the result', 'Проверьте результат'), text: t('The text is larger. Confirm that you noticed the change.', 'Текст стал крупнее. Подтвердите, что вы заметили изменение.'), hint: t('On your own device, choose the size that feels comfortable for you. The 120% size in this exercise is just an example.', 'В реальной жизни выбирайте размер, который удобен именно вам. 120% в этом упражнении — только пример.')}
@@ -441,14 +462,15 @@
       }
       if (s === 1) {
         if (!phone) return wrap(`<div class="mock-bar"><span>${state.dos === 'mac' ? t('Safari · View', 'Safari · Вид') : t('Google Chrome menu', 'Меню Google Chrome')}</span><span aria-hidden="true">${state.dos === 'mac' ? '⌘' : '⋮'}</span></div><div class="mock-menu"><button data-sim="retry-settings">${state.dos === 'mac' ? t('Show Sidebar', 'Показать боковую панель') : t('History', 'История')} <span aria-hidden="true">›</span></button><button data-sim="correct" data-testid="sim-text-menu">${state.dos === 'mac' ? t('Zoom In', 'Увеличить') : t('Page zoom', 'Масштаб страницы')} <span aria-hidden="true">›</span></button><button data-sim="retry-settings">${state.dos === 'mac' ? t('Actual Size', 'Фактический размер') : t('Downloads', 'Загрузки')} <span aria-hidden="true">›</span></button></div>`);
-        if (ios) return wrap(`<div class="set-title">${t('Settings', 'Настройки')}</div><div class="set-search" aria-hidden="true">${PH.ic('search', 16)}<span>${t('Search', 'Поиск')}</span></div><div class="set-group">${setRow('wifi', '#007aff', 'Wi‑Fi', '', 'retry-settings')}${setRow('bell', '#ff3b30', t('Notifications', 'Уведомления'), '', 'retry-settings')}${setRow('sound', '#ff2d55', t('Sounds & Haptics', 'Звуки, тактильные сигналы'), '', 'retry-settings')}</div><div class="set-group">${setRow('sun', '#007aff', t('Display & Brightness', 'Экран и яркость'), '', 'correct', 'sim-text-menu')}${setRow('battery', '#34c759', t('Battery', 'Аккумулятор'), '', 'retry-settings')}</div>`);
-        return wrap(`<div class="set-title">${t('Settings', 'Настройки')}</div><div class="set-search" aria-hidden="true">${PH.ic('search', 18)}<span>${t('Search settings', 'Поиск по настройкам')}</span></div><div class="set-group">${setRow('wifi', '#0b57d0', t('Network & internet', 'Сеть и интернет'), t('Wi‑Fi, mobile network', 'Wi‑Fi, мобильная сеть'), 'retry-settings')}${setRow('bell', '#b3261e', t('Notifications', 'Уведомления'), t('Notification history', 'История уведомлений'), 'retry-settings')}${setRow('sound', '#7d5260', t('Sound & vibration', 'Звук и вибрация'), t('Volume, haptics', 'Громкость, вибрация'), 'retry-settings')}${setRow('sun', '#146c2e', t('Display', 'Дисплей'), t('Dark theme, font size', 'Тёмная тема, размер шрифта'), 'correct', 'sim-text-menu')}${setRow('battery', '#6750a4', t('Battery', 'Батарея'), '82%', 'retry-settings')}</div>`);
+        if (active.sub === 'display') return wrap(displayScreen(ios));
+        if (ios) return wrap(`<div class="set-title">${t('Settings', 'Настройки')}</div><div class="set-search" aria-hidden="true">${PH.ic('search', 16)}<span>${t('Search', 'Поиск')}</span></div><div class="set-group">${setRow('wifi', '#007aff', 'Wi‑Fi', '', 'retry-settings')}${setRow('bell', '#ff3b30', t('Notifications', 'Уведомления'), '', 'retry-settings')}${setRow('sound', '#ff2d55', t('Sounds & Haptics', 'Звуки, тактильные сигналы'), '', 'retry-settings')}</div><div class="set-group">${setRow('sun', '#007aff', t('Display & Brightness', 'Экран и яркость'), '', 'open-display', 'sim-display')}${setRow('battery', '#34c759', t('Battery', 'Аккумулятор'), '', 'retry-settings')}</div>`);
+        return wrap(`<div class="set-title">${t('Settings', 'Настройки')}</div><div class="set-search" aria-hidden="true">${PH.ic('search', 18)}<span>${t('Search settings', 'Поиск по настройкам')}</span></div><div class="set-group">${setRow('wifi', '#0b57d0', t('Network & internet', 'Сеть и интернет'), t('Wi‑Fi, mobile network', 'Wi‑Fi, мобильная сеть'), 'retry-settings')}${setRow('bell', '#b3261e', t('Notifications', 'Уведомления'), t('Notification history', 'История уведомлений'), 'retry-settings')}${setRow('sound', '#7d5260', t('Sound & vibration', 'Звук и вибрация'), t('Volume, haptics', 'Громкость, вибрация'), 'retry-settings')}${setRow('sun', '#146c2e', t('Display', 'Дисплей'), t('Dark theme, font size', 'Тёмная тема, размер шрифта'), 'open-display', 'sim-display')}${setRow('battery', '#6750a4', t('Battery', 'Батарея'), '82%', 'retry-settings')}</div>`);
       }
       if (s === 2) {
         const pct = (active.zoom - 80) / 70 * 100;
         const slider = phone ? `<div class="size-slider" aria-hidden="true"><span class="sm">A</span><span class="trk"><i id="size-thumb" style="left:${pct}%"></i></span><span class="lg">A</span></div>` : '';
         const body = `<div class="mock-content"><h3>${t('A comfortable size', 'Удобный размер')}</h3><div class="zoom-controls"><button aria-label="${t('Make text smaller', 'Уменьшить текст')}" data-sim="zoom-minus" data-testid="zoom-minus">−</button><output id="zoom-value" aria-live="polite">${active.zoom}%</output><button aria-label="${t('Make text larger', 'Увеличить текст')}" data-sim="zoom-plus" data-testid="zoom-plus">+</button></div>${slider}<div class="sample-reading" id="reading-sample" style="font-size:${active.zoom}%"><strong>${t('It starts with one step.', 'Всё начинается с шага.')}</strong>${t('You can make this text easier to read.', 'Этот текст можно сделать удобнее для чтения.')}</div></div>`;
-        return wrap(bar(phone ? (ios ? t('Text Size', 'Размер текста') : t('Font size', 'Размер шрифта')) : t('Page zoom', 'Масштаб страницы'), {...back(t('Display', 'Экран')), right: 'Aa'}) + body);
+        return wrap(bar(phone ? (ios ? t('Text Size', 'Размер текста') : t('Font size and style', 'Размер и стиль шрифта')) : t('Page zoom', 'Масштаб страницы'), {...back(t('Display', 'Экран')), right: 'Aa'}) + body);
       }
       return wrap(bar(phone ? t('Result', 'Результат') : t('Checking the result', 'Проверка результата'), {...back(t('Back', 'Назад')), right: active.zoom + '%'}) + `<div class="mock-content"><div class="sample-reading" style="font-size:${active.zoom}%"><strong>${t('This feels comfortable.', 'Теперь мне удобно.')}</strong>${t('I can change the text size and return to settings.', 'Я могу изменить размер текста и вернуться к настройкам.')}</div><div style="margin-top:23px">${mockButton(t('Yes, the text is larger', 'Да, текст стал крупнее'), 'correct', '✓', 'data-testid="sim-verify-text"', 'check')}</div><p class="mock-note">${t('Your own device may use a different way to change the size.', 'На настоящем устройстве размер может меняться другим способом.')}</p></div>`);
     }
@@ -613,12 +635,17 @@
   function tapTarget() {
     if (!active) return null;
     if (active.id === 'text' && active.step === 2) return $('#training-view .simulator [data-sim="zoom-plus"]');
+    if (active.id === 'text' && active.step === 1 && !active.sub) return $('#training-view .simulator [data-sim="open-display"]') || $('#training-view .simulator [data-sim="correct"]');
     return $('#training-view .simulator [data-sim="correct"]');
   }
   function markTarget() {
     $$('#training-view .tap-here').forEach(el => el.classList.remove('tap-here'));
     const target = tapTarget();
-    if (active && active.hint && !active.valid[active.step] && target) target.classList.add('tap-here');
+    if (active && active.hint && !active.valid[active.step] && target) {
+      target.classList.add('tap-here');
+      const scr = target.closest('.ph-screen');
+      if (scr) scr.scrollTop += target.getBoundingClientRect().top - scr.getBoundingClientRect().top - scr.clientHeight / 2;
+    }
   }
   function correct() {
     active.valid[active.step] = true;
@@ -630,6 +657,7 @@
     return {
       'wrong-app': t('That is a different app. Look for the gear icon named “Settings”.', 'Это другое приложение. Ищите значок шестерёнки «Настройки».'),
       'retry-settings': t('That option does something else. Try again: look for text size or zoom.', 'Этот пункт отвечает за другое действие. Попробуйте ещё раз: нужный пункт связан с текстом или масштабом.'),
+      'retry-display': state.os === 'ios' ? t('That option changes something else. Look for “Text Size”.', 'Этот пункт меняет другое. Найдите строку «Размер текста».') : t('That option changes something else. Look for “Font size and style”.', 'Этот пункт меняет другое. Найдите строку «Размер и стиль шрифта».'),
       'wrong-domain': t('That address is spelled differently. Check each letter: you need egov.kz. You can try again.', 'У этого адреса другое написание. Сверьте каждую букву: нужно egov.kz. Можно попробовать ещё раз.'),
       'wrong-service': t('That section does not answer our question. Look for the option named in the instructions. The hint is still available.', 'Этот раздел не отвечает на наш вопрос. Найдите пункт из задания; подсказка остаётся рядом.'),
       'wrong-hours': t('Look at the schedule again: Saturday and Sunday are marked as closed.', 'Посмотрите на расписание ещё раз: суббота и воскресенье отмечены как выходные.'),
@@ -642,6 +670,12 @@
   function simAction(action, button) {
     if (!active) return;
     if (action === 'correct') { correct(); button.classList.add('correct'); return; }
+    if (action === 'open-display' || action === 'display-back') {
+      active.sub = action === 'open-display' ? 'display' : null;
+      active.feedback = null; active.tone = '';
+      renderTraining();
+      return;
+    }
     if (action === 'zoom-plus' || action === 'zoom-minus') {
       active.zoom = Math.min(150, Math.max(80, active.zoom + (action === 'zoom-plus' ? 10 : -10)));
       $('#zoom-value').textContent = active.zoom + '%';
