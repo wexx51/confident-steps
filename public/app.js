@@ -10,6 +10,10 @@
   const key = 'uverenny-shag-v1';
   /* display preference, kept apart from progress so it works without the save switch */
   const contrastKey = 'uverenny-shag-contrast';
+  /* text size: steps in % of the normal 19px root size (step 1); the floating panel moves between them */
+  const textKey = 'uverenny-shag-text', textSteps = [85, 100, 115, 130, 150];
+  let textStep = 1;
+  try { const saved = Number(localStorage.getItem(textKey)); if (saved >= 0 && saved < textSteps.length && localStorage.getItem(textKey) !== null) textStep = saved; } catch (_) { /* Normal size until the page is reloaded. */ }
   const lessonIds = ['egov', 'whatsapp', 'telegram', 'phone', 'internet', 'kaspi', 'kaspiqr', 'bankcall', 'tgscam'];
   /* exercises that only make sense on a phone */
   const phoneOnly = ['phone', 'message', 'file', 'kaspi', 'kaspiqr', 'bankcall', 'tgscam'];
@@ -931,12 +935,13 @@ ${statsData.storage === 'memory' ? `<p class="small">${t('Statistics storage is 
       case 'chat': showChat(); break;
       case 'chat-chip': sendChat(button.dataset.q); break;
       case 'chat-remove': chatState.image = null; refreshChat(); break;
-      case 'font': {
-        const enabled = document.body.classList.toggle('large-text');
-        document.documentElement.classList.toggle('large-text', enabled);
-        button.setAttribute('aria-pressed', String(enabled));
-        button.setAttribute('aria-label', enabled ? t('Restore normal text size', 'Вернуть обычный размер текста') : t('Make website text larger', 'Увеличить текст на сайте'));
-        announce(enabled ? t('Large text is on.', 'Крупный текст включён.') : t('Normal text size is on.', 'Обычный размер текста включён.')); break;
+      case 'text-smaller': case 'text-larger': {
+        const next = textStep + (button.dataset.action === 'text-larger' ? 1 : -1);
+        if (next < 0 || next >= textSteps.length) { announce(next < 0 ? t('This is the smallest text size.', 'Это самый маленький размер текста.') : t('This is the largest text size.', 'Это самый крупный размер текста.')); break; }
+        textStep = next;
+        try { localStorage.setItem(textKey, String(textStep)); } catch (_) { /* The size still works until the page is reloaded. */ }
+        refreshTextSize();
+        announce(t(`Text size: ${textPercent()}%.`, `Размер текста: ${textPercent()}%.`)); break;
       }
       case 'contrast': {
         const enabled = document.documentElement.classList.toggle('high-contrast');
@@ -1062,11 +1067,16 @@ ${statsData.storage === 'memory' ? `<p class="small">${t('Statistics storage is 
       status.className = ''; setLocalizedStatus(status.id, () => t('Your answer file is ready to download. The website has not sent it to the researcher. You decide whether to share it. If the download is blocked, allow it in your browser and try again.', 'Файл с ответами подготовлен для скачивания. Сайт не передал его исследователю. Вы сами решаете, делиться ли им. Если скачивание заблокировано, разрешите его в браузере и повторите.'));
     } catch (_) { if (url) URL.revokeObjectURL(url); status.className = 'inline-error'; setLocalizedStatus(status.id, () => t('The browser could not create the file. Your answers remain on this page. You can try another browser.', 'Браузер не смог создать файл. Ответы остаются на странице; можно попробовать другой браузер.')); }
   });
-  function refreshFontLabel() {
-    const enabled = document.body.classList.contains('large-text');
-    const button = $('[data-action="font"]');
-    button?.setAttribute('aria-pressed', String(enabled));
-    button?.setAttribute('aria-label', enabled ? t('Restore normal text size', 'Вернуть обычный размер текста') : t('Make website text larger', 'Увеличить текст на сайте'));
+  const textPercent = () => textSteps[textStep];
+  function refreshTextSize() {
+    const root = document.documentElement, large = textStep > 1;
+    root.style.fontSize = textStep === 1 ? '' : 19 * textSteps[textStep] / 100 + 'px';
+    root.classList.toggle('large-text', large);
+    document.body.classList.toggle('large-text', large);
+    const size = $('#text-size');
+    if (size) size.textContent = textPercent() + '%';
+    $('[data-action="text-smaller"]')?.setAttribute('aria-disabled', String(textStep === 0));
+    $('[data-action="text-larger"]')?.setAttribute('aria-disabled', String(textStep === textSteps.length - 1));
   }
   function refreshContrastLabel() {
     const enabled = document.documentElement.classList.contains('high-contrast');
@@ -1103,12 +1113,12 @@ ${statsData.storage === 'memory' ? `<p class="small">${t('Statistics storage is 
     }
     refreshAgeNote();
     refreshStatuses();
-    refreshFontLabel();
+    refreshTextSize();
     refreshContrastLabel();
     refreshOffline();
   });
   renderCards();
-  refreshFontLabel();
+  refreshTextSize();
   refreshContrastLabel();
   refreshOffline();
   try { if (!sessionStorage.getItem('uverenny-shag-visit')) { sessionStorage.setItem('uverenny-shag-visit', '1'); track('visit', {lang: window.CSLocale.lang, installed: standalone()}); } } catch (_) { track('visit', {lang: window.CSLocale.lang, installed: standalone()}); }
