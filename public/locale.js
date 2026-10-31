@@ -59,7 +59,7 @@
     s054: ['Sample data only', 'Только учебные данные'],
     s055: ['You do not need passwords, text message codes, documents, or personal photos. Nothing is sent anywhere.', 'Не нужны пароли, коды из SMS, документы и личные фотографии. Ничего никуда не отправляется.'],
     s056: ['Pick up another day', 'Продолжить в другой день'],
-    s057: ['If you choose, this browser can remember completed practices and confidence ratings. Survey answers are not saved.', 'По желанию сохраняйте пройденные практики и отметки уверенности в этом браузере. Ответы анкеты не сохраняются.'],
+    s057: ['This browser remembers completed practices and confidence ratings, so you can continue another day. They stay on this device only. Survey answers are not saved. You can switch this off.', 'Этот браузер запоминает пройденные практики и отметки уверенности, чтобы можно было продолжить в другой день. Они остаются только на этом устройстве. Ответы анкеты не сохраняются. Сохранение можно выключить.'],
     s058: ['Remember my progress', 'Запоминать мой прогресс'],
     s059: ['Delete saved progress', 'Удалить сохранённый прогресс'],
     s060: ['← Back to home', '← На главную'],

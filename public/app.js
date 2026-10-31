@@ -36,7 +36,7 @@
   }
   const emptyProgress = () => ({phone: [], computer: []});
   const emptyRatings = () => ({phone: {before: null, after: null}, computer: {before: null, after: null}});
-  let state = {device: 'phone', os: 'android', dos: 'windows', progress: emptyProgress(), ratings: emptyRatings(), save: false};
+  let state = {device: 'phone', os: 'android', dos: 'windows', progress: emptyProgress(), ratings: emptyRatings(), save: true};
   let active = null;
   let confidenceContext = null;
   let scenario = null;
@@ -57,7 +57,9 @@
   }
   try {
     const saved = JSON.parse(localStorage.getItem(key) || 'null');
-    if (saved && saved.save === true) {
+    /* saving is on unless the person switched it off; that choice is stored as {save: false} */
+    if (saved && saved.save === false) state.save = false;
+    else if (saved) {
       state.save = true;
       state.device = saved.device === 'computer' ? 'computer' : 'phone';
       state.os = saved.os === 'ios' ? 'ios' : 'android';
@@ -702,7 +704,7 @@
       t('All screens are practice copies. Nothing is opened, changed or sent on your real phone or computer, so mistakes are safe.', 'Все экраны учебные. На вашем настоящем телефоне или компьютере ничего не открывается, не меняется и не отправляется, поэтому ошибаться не страшно.'),
       t('Every exercise has a hint, a printable cheat sheet and, after you finish, a learning certificate.', 'У каждой практики есть подсказка, шпаргалка для печати и учебный сертификат после прохождения.')
     ])}${block(t('Your data', 'Ваши данные'), [
-      t('Progress and confidence ratings are kept only in this browser, and only if you turn on saving. You can delete them at any time.', 'Прогресс и отметки уверенности хранятся только в этом браузере и только если вы включили сохранение. Их можно удалить в любой момент.'),
+      t('Progress and confidence ratings are kept only in this browser on your device. Saving can be switched off, and they can be deleted at any time.', 'Прогресс и отметки уверенности хранятся только в этом браузере на вашем устройстве. Сохранение можно выключить, а данные — удалить в любой момент.'),
       t('Survey answers are not sent anywhere: you download them as a file and decide yourself whether to share it.', 'Ответы анкеты никуда не отправляются: вы скачиваете их файлом и сами решаете, передавать ли его.'),
       t('The name on a certificate stays on the page and is not saved.', 'Имя на сертификате остаётся на странице и не сохраняется.'),
       t('Questions and screenshots for the AI helper go through our server to Google Gemini to get an answer. The site does not store them. Please do not share phone numbers, IIN, card numbers or codes.', 'Вопросы и скриншоты для ИИ-помощника идут через наш сервер в Google Gemini, чтобы получить ответ. Сайт их не хранит. Пожалуйста, не пишите номера телефонов, ИИН, номера карт и коды.'),
@@ -871,7 +873,7 @@ ${statsData.storage === 'memory' ? `<p class="small">${t('Statistics storage is 
     const hasCompleted = state.progress[state.device].length > 0;
     const title = mode === 'before' ? t('How do you feel before practising?', 'Как вы чувствуете себя перед практикой?') : mode === 'after' ? t('How do you feel now?', 'Как вы чувствуете себя сейчас?') : t('Your confidence, in your own words.', 'Ваша уверенность — ваш ориентир.');
     const groups = mode === 'before' ? scale('before', t('Before practice', 'Перед практикой')) : mode === 'after' ? scale('after', t('After practice', 'После практики')) : scale('before', t('Before practice', 'Перед практикой')) + (hasCompleted ? scale('after', t('After practice', 'После практики')) : `<p class="small">${t('After completing your first exercise, you can rate your confidence again.', 'После первой завершённой практики можно будет отметить уверенность ещё раз.')}</p>`);
-    $('#confidence-view').innerHTML = `<button class="text-button back-link" data-action="practices">${t('← All exercises', '← Все практики')}</button><p class="eyebrow">${deviceName().toUpperCase()} · ${t('SELF-RATING FROM 1 TO 5', 'САМООЦЕНКА ОТ 1 ДО 5')}</p><h1 id="confidence-title" tabindex="-1">${title}</h1><p class="intro">${t(`How confident do you feel doing familiar tasks on a ${state.device === 'phone' ? 'phone' : 'computer'} on your own? There is no right answer. This personal rating is optional.`, `Насколько уверенно вы сейчас выполняете знакомые действия на ${state.device === 'phone' ? 'телефоне' : 'компьютере'} самостоятельно? Здесь нет правильного ответа. Это добровольная личная отметка.`)}</p><form id="confidence-form">${groups}<div class="confidence-actions"><button class="button primary" type="submit" data-testid="save-confidence">${task ? t('Save and start', 'Сохранить и начать') : t('Save rating', 'Сохранить отметку')} <span aria-hidden="true">→</span></button><button class="text-button" type="button" data-action="skip-confidence" data-testid="skip-confidence">${task ? t('Start without a rating', 'Начать без отметки') : t('Skip', 'Пропустить')}</button></div><p id="confidence-status" role="status" class="small"></p></form><p class="confidence-explainer">${t('Your rating may go up or down. It does not prove a research outcome. Ratings stay on this page, or in this browser if you turn on progress saving. You can delete them on the home page.', 'Самооценка может измениться в любую сторону. Она не доказывает результат исследования. Отметки хранятся только на этой странице, а при включённом сохранении прогресса — в этом браузере. Вы можете удалить их на главной.')}</p>`;
+    $('#confidence-view').innerHTML = `<button class="text-button back-link" data-action="practices">${t('← All exercises', '← Все практики')}</button><p class="eyebrow">${deviceName().toUpperCase()} · ${t('SELF-RATING FROM 1 TO 5', 'САМООЦЕНКА ОТ 1 ДО 5')}</p><h1 id="confidence-title" tabindex="-1">${title}</h1><p class="intro">${t(`How confident do you feel doing familiar tasks on a ${state.device === 'phone' ? 'phone' : 'computer'} on your own? There is no right answer. This personal rating is optional.`, `Насколько уверенно вы сейчас выполняете знакомые действия на ${state.device === 'phone' ? 'телефоне' : 'компьютере'} самостоятельно? Здесь нет правильного ответа. Это добровольная личная отметка.`)}</p><form id="confidence-form">${groups}<div class="confidence-actions"><button class="button primary" type="submit" data-testid="save-confidence">${task ? t('Save and start', 'Сохранить и начать') : t('Save rating', 'Сохранить отметку')} <span aria-hidden="true">→</span></button><button class="text-button" type="button" data-action="skip-confidence" data-testid="skip-confidence">${task ? t('Start without a rating', 'Начать без отметки') : t('Skip', 'Пропустить')}</button></div><p id="confidence-status" role="status" class="small"></p></form><p class="confidence-explainer">${t('Your rating may go up or down. It does not prove a research outcome. Ratings stay only in this browser on your device. You can delete them on the home page.', 'Самооценка может измениться в любую сторону. Она не доказывает результат исследования. Отметки хранятся только в этом браузере на вашем устройстве. Вы можете удалить их на главной.')}</p>`;
     if (redraw) {
       pending.forEach(([name, value]) => {
         const input = $(`#confidence-form input[name="${name}"][value="${value}"]`);
@@ -978,8 +980,8 @@ ${statsData.storage === 'memory' ? `<p class="small">${t('Statistics storage is 
       case 'confidence-after': showConfidence('after'); break;
       case 'skip-confidence': { const task = confidenceContext?.task; if (task) beginTask(task, true); else home('practices'); break; }
       case 'erase': {
-        state.progress = emptyProgress(); state.ratings = emptyRatings(); state.save = false;
-        let removed = true; try { localStorage.removeItem(key); } catch (_) { removed = false; }
+        state.progress = emptyProgress(); state.ratings = emptyRatings();
+        let removed = true; try { localStorage.removeItem(key); localStorage.setItem(key, JSON.stringify(state.save ? state : {save: false})); } catch (_) { removed = false; }
         renderCards(); setLocalizedStatus('storage-status', () => removed ? t('Saved progress and confidence ratings have been deleted. You can start with any exercise.', 'Сохранённый прогресс и отметки уверенности удалены. Можно начать с любого шага.') : t('Ratings on this page have been deleted. The browser did not allow its storage to be cleared. If needed, clear the site data in your browser settings.', 'Отметки на странице удалены. Браузер не разрешил очистить хранилище; при необходимости очистите данные сайта в настройках браузера.')); announce($('#storage-status').textContent); break;
       }
       case 'clear-survey': $('#survey-form').reset(); refreshAgeNote(); setLocalizedStatus('survey-status', () => t('The survey has been cleared. Answers have not been saved.', 'Анкета очищена. Ответы не сохранены.')); break;
@@ -988,7 +990,7 @@ ${statsData.storage === 'memory' ? `<p class="small">${t('Statistics storage is 
   $('#save-progress').addEventListener('change', event => {
     state.save = event.target.checked;
     if (state.save) { if (persist()) setLocalizedStatus('storage-status', () => t('Progress and confidence ratings will be saved in this browser. Survey answers are not saved.', 'Прогресс и отметки уверенности будут сохранены в этом браузере. Анкета не сохраняется.')); }
-    else { try { localStorage.removeItem(key); setLocalizedStatus('storage-status', () => t('Saving is off. Your progress is available until you reload the page.', 'Сохранение выключено. Прогресс доступен до обновления страницы.')); } catch (_) { setLocalizedStatus('storage-status', () => t('Saving is off. The browser did not allow its storage to be cleared. You can clear it in your browser settings.', 'Сохранение выключено. Браузер не разрешил очистить хранилище; его можно очистить в настройках браузера.')); } }
+    else { try { localStorage.setItem(key, JSON.stringify({save: false})); setLocalizedStatus('storage-status', () => t('Saving is off. Your progress is available until you reload the page.', 'Сохранение выключено. Прогресс доступен до обновления страницы.')); } catch (_) { setLocalizedStatus('storage-status', () => t('Saving is off. The browser did not allow its storage to be cleared. You can clear it in your browser settings.', 'Сохранение выключено. Браузер не разрешил очистить хранилище; его можно очистить в настройках браузера.')); } }
     announce($('#storage-status').textContent);
   });
   document.addEventListener('change', event => {
