@@ -8,10 +8,12 @@
  *
  * Optional env: FALLBACK_MODELS (comma list, tried when MODEL is busy), PORT (3000), MODEL (default gemini-3.8-flash / claude-haiku-5-5), ALLOWED_ORIGIN (CORS, only if the site is hosted elsewhere),
  *               RATE_PER_MIN (12 requests per IP per minute), DAILY_LIMIT (500 requests per day for everyone),
- *               UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN (free Upstash Redis for anonymous statistics).
+ *               UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN (free Upstash Redis for anonymous statistics),
+ *               TTS_MODEL (Kazakh read-aloud through Gemini, default gemini-3.8-flash-lite-tts; needs GEMINI_API_KEY).
  * Node 18+ is required. No npm packages.
  */
 const http = require('http');
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 
@@ -33,7 +35,7 @@ function siteFiles(dir = PUBLIC) {
 }
 const OFFLINE = (() => {
   const files = siteFiles().filter(f => !f.endsWith('sw.js')).sort();
-  const hash = require('crypto').createHash('sha1');
+  const hash = crypto.createHash('sha1');
   files.forEach(f => { hash.update(f); hash.update(fs.readFileSync(f)); });
   const urls = ['/', ...files.map(f => '/' + path.relative(PUBLIC, f).split(path.sep).join('/'))];
   return {version: hash.digest('hex').slice(0, 12), urls};
@@ -56,13 +58,54 @@ function send(res, code, body, headers = {}) {
   res.end(typeof body === 'string' ? body : JSON.stringify(body));
 }
 
+/* ---------- Kazakh read-aloud: few phones have a Kazakh voice, so the server asks Gemini TTS for one ----------
+ * Lesson texts repeat for every visitor, so each clip is kept in memory and costs one request per server start. */
+const TTS_MODEL = process.env.TTS_MODEL || 'gemini-3.8-flash-lite-tts';
+const ttsCache = new Map(), ttsHits = new Map();
+setInterval(() => ttsHits.clear(), 60000).unref();
+function wav(pcm) {
+  const h = Buffer.alloc(44);
+  h.write('RIFF', 0); h.writeUInt32LE(36 + pcm.length, 4); h.write('WAVEfmt ', 8); h.writeUInt32LE(16, 16); h.writeUInt16LE(1, 20); h.writeUInt16LE(1, 22);
+  h.writeUInt32LE(24000, 24); h.writeUInt32LE(48000, 28); h.writeUInt16LE(2, 32); h.writeUInt16LE(16, 34); h.write('data', 36); h.writeUInt32LE(pcm.length, 40);
+  return Buffer.concat([h, pcm]);
+}
+async function handleTTS(req, res) {
+  if (!GEMINI_KEY) return send(res, 503, {error: 'tts off'});
+  let raw = '';
+  for await (const chunk of req) { raw += chunk; if (raw.length > 3000) return send(res, 413, {error: 'too large'}); }
+  let text;
+  try { text = String(JSON.parse(raw).text || '').trim().slice(0, 1200); } catch (_) { return send(res, 400, {error: 'bad json'}); }
+  if (!text) return send(res, 400, {error: 'empty'});
+  const key = crypto.createHash('sha1').update(text).digest('hex');
+  let clip = ttsCache.get(key);
+  if (!clip) {
+    const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+    const n = (ttsHits.get(ip) || 0) + 1; ttsHits.set(ip, n);
+    if (n > 20) return send(res, 429, {error: 'too many requests'});
+    try {
+      const r = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions', {method: 'POST', headers: {'x-goog-api-key': GEMINI_KEY, 'content-type': 'application/json'}, signal: AbortSignal.timeout(30000),
+        body: JSON.stringify({model: TTS_MODEL, input: [{type: 'user_input', content: [{type: 'text', text, annotations: [{type: 'speech_metadata', style: 'calm, slow and clear, in Kazakh, for an older listener'}]}]}], response_format: {type: 'audio'}, generation_config: {speech_config: [{voice: 'Kore'}]}})});
+      if (!r.ok) throw new Error('tts ' + r.status + ' ' + (await r.text()).slice(0, 200));
+      const data = await r.json();
+      const audio = (data.steps || []).filter(st => st.type === 'model_output').flatMap(st => st.content || []).filter(c => c.type === 'audio').pop();
+      if (!audio || !audio.data) throw new Error('tts: no audio');
+      const buf = Buffer.from(audio.data, 'base64');
+      clip = buf.slice(0, 4).toString() === 'RIFF' ? buf : wav(buf);
+      if (ttsCache.size > 400) ttsCache.delete(ttsCache.keys().next().value);
+      ttsCache.set(key, clip);
+    } catch (e) { console.error(e.message); return send(res, 502, {error: 'tts unavailable'}); }
+  }
+  res.writeHead(200, {'Content-Type': 'audio/wav', 'Content-Length': clip.length, 'Cache-Control': 'no-store'});
+  res.end(clip);
+}
+
 /* ---------- anonymous statistics: only totals are kept, no IP, no ids, no cookies, no texts ----------
  * Stored in Upstash Redis when UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are set (free tier, survives
  * Render restarts), otherwise in memory (lost on restart; fine for local testing).
  * Keys: hash cs:stats (field -> count) and hash cs:days (YYYY-MM-DD -> visits).
  * New exercises must be added to LESSONS, other ids are ignored. */
 const UP_URL = process.env.UPSTASH_REDIS_REST_URL, UP_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
-const LESSONS = ['text', 'address', 'file', 'message', 'egov', 'whatsapp', 'telegram', 'phone', 'internet', 'kaspi', 'kaspiqr', 'bankcall', 'tgscam'];
+const LESSONS = ['text', 'address', 'file', 'message', 'egov', 'whatsapp', 'telegram', 'phone', 'internet', 'kaspi', 'kaspiqr', 'bankcall', 'tgscam', 'doctor', 'wavideo', 'kaspibill', 'smscode'];
 const OSES = ['ios', 'android', 'windows', 'mac'], LANGS = ['ru', 'en', 'kk'];
 const memStats = new Map(), memDays = new Map();
 const statHits = new Map();
@@ -177,6 +220,11 @@ http.createServer((req, res) => {
     if (req.method === 'OPTIONS') return send(res, 204, '');
     if (req.method === 'POST') return handleAI(req, res);
     return send(res, 405, {error: 'POST only'});
+  }
+  if (url.pathname === '/api/tts') {
+    if (req.method === 'POST') return handleTTS(req, res);
+    if (req.method === 'GET') return send(res, 200, {on: !!GEMINI_KEY});
+    return send(res, 405, {error: 'GET or POST only'});
   }
   if (url.pathname === '/api/stats') {
     if (req.method === 'POST') return handleStatsPost(req, res);

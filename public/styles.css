@@ -1073,3 +1073,54 @@ html.high-contrast :is(.st-track,.st-rate){background-color:#444!important}html.
 .dsp-row:has(.dsp-val) .dsp-t{flex:none}
 .dsp-row .dsp-val{flex:1;max-width:none}
 @media (max-width:420px){.nav-ios.dsp-nav .nb-back em{display:none}.nav-ios.dsp-nav{grid-template-columns:44px minmax(0,1fr) 44px}}
+/* ---------- new lessons: utilities in Kaspi, WhatsApp video call, SMS code, doctor in eGov ---------- */
+.kp-psearch{margin:10px 12px 0;min-height:44px}
+.kp-bill{padding:12px 16px;display:flex;flex-direction:column;gap:2px}.kp-bill small{font-size:13px;color:#8e8e93}.kp-bill strong{font-size:17px}
+.kp-bl{display:flex;justify-content:space-between;gap:10px;padding:7px 0;font-size:15px;border-bottom:1px solid #f0f0f0}.kp-bl:last-child{border-bottom:0}
+.kp-bl.total{font-size:17px;font-weight:700;padding-top:10px}
+.kp-pay{margin:auto 12px 14px;min-height:52px;border:0;border-radius:12px;background:#f14635;color:#fff;font-size:17px;font-weight:600}
+.mx-kp .eg-ban{margin:4px 8px 4px}
+.mx .mx-hbtn{display:grid;place-items:center;width:44px;height:44px;margin:-4px -6px;border:0;border-radius:50%;background:transparent;color:inherit}
+.mx-ph{color:#8696a0}
+/* WhatsApp video call */
+.vc{position:relative;flex:1;display:flex;flex-direction:column;margin:calc(-1 * var(--sb)) 0 -22px;padding:calc(var(--sb) + 8px) 0 28px;background:#1d2b33;color:#fff;overflow:hidden}
+.vc-video{position:absolute;inset:0;background:radial-gradient(circle at 50% 38%,#e9b97a 0 18%,transparent 19%),linear-gradient(170deg,#6f8fa6,#2f4858 60%,#1d2b33)}
+.vc-face{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);font-size:46px;font-weight:700;color:rgba(80,50,20,.55)}
+.vc-top,.vc-say,.vc-bar,.vc-self{position:relative}
+.vc-top{display:flex;flex-direction:column;align-items:center;gap:2px;text-shadow:0 1px 3px rgba(0,0,0,.4)}.vc-top strong{font-size:20px;font-weight:600}.vc-top small{font-size:12px;opacity:.85}
+.vc-say{margin:14px auto 0;padding:8px 14px;border-radius:16px;background:rgba(0,0,0,.45);font-size:15px;max-width:85%;text-align:center}
+.vc-self{position:absolute;right:12px;top:calc(var(--sb) + 70px);width:74px;height:104px;border-radius:12px;background:linear-gradient(160deg,#c9a27a,#7b5b44);border:2px solid rgba(255,255,255,.7);display:grid;place-items:end center;padding-bottom:6px;font-size:12px}
+.vc-bar{margin-top:auto;display:flex;justify-content:space-around;gap:4px;padding:12px 8px 6px;background:rgba(20,28,33,.82);border-radius:26px 26px 0 0}
+.mx .vc-btn,.vc-btn{border:0;background:transparent;color:#fff;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:12px;min-width:58px;padding:0}
+.vc-round{display:grid;place-items:center;width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,.18);font-style:normal}
+.vc-round.muted{background:#fff}.vc-round.muted svg path{fill:#1d2b33}
+.vc-off{position:relative;display:grid}.vc-off::after{content:"";position:absolute;left:-2px;right:-2px;top:50%;height:2.5px;background:#1d2b33;transform:rotate(-45deg);box-shadow:0 0 0 1.5px #fff}
+.vc-round.red{background:#ea0038}.vc-round.red svg{transform:rotate(135deg)}
+.vc-btn.correct .vc-round{box-shadow:0 0 0 3px #9dffb8}.vc-btn.correct .vc-round.muted{background:#fff}.vc-btn.correct .vc-off::after{display:none}
+/* SMS notification on the home screen */
+.sm-note{display:flex;align-items:center;gap:10px;margin:6px 10px 10px;padding:10px 12px;border:0;border-radius:18px;background:rgba(245,245,247,.94);color:#000;text-align:left;box-shadow:0 4px 18px rgba(0,0,0,.25);min-height:60px}
+.sm-nic{display:grid;place-items:center;width:34px;height:34px;border-radius:9px;background:#34c759;flex:none}
+.sm-nt{flex:1;min-width:0;display:flex;flex-direction:column}.sm-nt b{font-size:14px}.sm-nt small{font-size:13px;line-height:1.3}
+.sm-note em{font-style:normal;font-size:12px;color:#6e6e73;align-self:flex-start}
+.sm-note.correct{box-shadow:0 0 0 3px #9dffb8,0 4px 18px rgba(0,0,0,.25)}
+.sm-ava{color:#fff;font-weight:600;font-size:18px}
+.sm-ring{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#34c759;vertical-align:-4px;margin-right:4px}
+.mx-sms .sm-opt{min-height:48px}
+/* eGov doctor appointment */
+.eg-clinic{background:#fff;border-radius:14px;padding:10px 14px;margin-bottom:10px;display:flex;flex-direction:column}.eg-clinic small{font-size:13px;color:#6b7385}.eg-clinic strong{font-size:16px}
+.eg-list{background:#fff;border-radius:14px;overflow:hidden}
+.mx .eg-row{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;padding:8px 14px;border:0;border-bottom:1px solid #eef1f6;background:transparent;text-align:left;color:inherit;font-size:15px}.mx .eg-row:last-child{border-bottom:0}
+.eg-lt{flex:1;min-width:0;display:flex;flex-direction:column}.eg-lt small{font-size:12.5px;color:#6b7385}.eg-row i{font-style:normal;color:#9aa3b5;font-size:20px}
+.eg-slots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.eg-slot{display:grid;place-items:center;min-height:44px;border-radius:12px;background:#fff;border:1.5px solid #d6deeb;font-size:15px}
+.eg-slot.busy{background:#e9edf3;color:#9aa3b5;border-color:transparent;text-decoration:line-through}
+.eg-slot.on{background:#2f6fe4;border-color:#2f6fe4;color:#fff;font-weight:600}
+.mx .eg-book{width:100%;min-height:52px;border:0;border-radius:14px;background:#2f6fe4;color:#fff;font-size:17px;font-weight:600}
+.kp-psearch{flex:none!important;display:flex;align-items:center;gap:8px;padding:0 12px;border-radius:12px;background:#fff;color:#8e8e93}
+.kp-pay{margin-bottom:22px}
+.vc-self{top:calc(var(--sb) + 132px)}
+.review-start{margin-top:12px;min-height:56px}
+/* the Next button fills up while the next step opens by itself */
+[data-action="next"].auto{position:relative;overflow:hidden}
+[data-action="next"].auto::after{content:"";position:absolute;left:0;bottom:0;height:6px;width:0;background:rgba(255,255,255,.8);animation:auto-fill 3s linear forwards}
+@keyframes auto-fill{to{width:100%}}

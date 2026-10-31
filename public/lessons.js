@@ -133,7 +133,7 @@ window.CSLessonsFactory = H => {
   const kGold = () => `<span class="kp-gold">${kIcon('card', '#fff', 16)}</span>`;
   /* main screen; target is the one control that is right in this step: 'transfers' or 'qr' */
   const kHome = target => {
-    const to = target === 'qr' ? [' To pay at the checkout, tap “Kaspi QR” at the bottom.', ' Для оплаты на кассе нажмите «Kaspi QR» внизу.'] : [' To send money, tap “Transfers”.', ' Чтобы отправить деньги, нажмите «Переводы».'];
+    const to = target === 'qr' ? [' To pay at the checkout, tap “Kaspi QR” at the bottom.', ' Для оплаты на кассе нажмите «Kaspi QR» внизу.'] : target === 'payments' ? [' To pay for utilities, tap “Payments”.', ' Чтобы оплатить коммунальные услуги, нажмите «Платежи».'] : [' To send money, tap “Transfers”.', ' Чтобы отправить деньги, нажмите «Переводы».'];
     const why = {
       shop: ['“Shop” is for buying goods on Kaspi.kz.', '«Магазин» — это покупки на Kaspi.kz.'], bank: ['“My Bank” shows your cards and accounts.', '«Мой Банк» показывает ваши карты и счета.'],
       payments: ['“Payments” is for bills, phone and fines.', '«Платежи» — это оплата коммунальных услуг, связи и штрафов.'], transfers: ['“Transfers” is for sending money to a person.', '«Переводы» — чтобы отправить деньги человеку.'],
@@ -174,6 +174,16 @@ window.CSLessonsFactory = H => {
   const egSite = (inner, active) => `<div class="egw"><div class="egw-top"><span class="egw-logo"><img src="${logo('egov')}" alt="">egov.kz</span><nav>${[t('Home', 'Главная'), t('Services', 'Услуги'), t('Messages', 'Сообщения'), t('My profile', 'Мой профиль'), t('News', 'Новости')].map((n, i) => `<span class="${i === active ? 'on' : ''}">${n}</span>`).join('')}</nav><span class="egw-lang">РУС ▾</span><span class="egw-user">${g('person', '#fff', 16)}</span></div>${inner}<div class="egw-foot">© ${t('Electronic government of Kazakhstan · practice copy', 'Электронное правительство РК · учебная копия')}</div></div>`;
   const egTabs = on => `<div class="mx-tabs eg" aria-hidden="true">${[['home', t('Home', 'Главная')], ['people', t('Services', 'Сервисы')], ['bell', t('Messages', 'Сообщения')], ['person', t('Profile', 'Профиль')]].map(([k, l], i) => `<span class="${i === on ? 'on' : ''}"><b>${g(k, 'currentColor', 22)}</b>${l}</span>`).join('')}</div>`;
   const chatRow = (a, name, last, time, unread, wrong, cls = '') => act(`${a}<span class="mx-rt"><span class="mx-r1"><strong>${name}</strong><time class="${unread ? 'u' : ''}">${time}</time></span><span class="mx-r2"><small>${last}</small>${unread ? `<em>${unread}</em>` : ''}</span></span>`, wrong, 'mx-row ' + cls);
+
+  /* native Messages app: one SMS from the sender and a sheet of choices under it */
+  const smsScreen = (from, letter, text, title, items) => {
+    const ios = isIos();
+    const head = ios
+      ? `<div class="sm-head ios"><span class="sm-back">${g('chev', '#007aff', 24)}</span><span class="sm-who"><span class="sm-ava">${letter}</span><small>${from} ›</small></span><span></span></div>`
+      : `<div class="sm-head and">${g('back', '#1f1f1f', 24)}<span class="sm-ava">${letter}</span><span class="sm-t"><strong>${from}</strong></span>${g('more', '#1f1f1f', 22)}</div>`;
+    const opt = it => `<button type="button" class="sm-opt" ${it[1] === 'correct' ? 'data-sim="correct" data-testid="lesson-ok"' : 'data-sim="lw" ' + it[2]}>${it[0]}</button>`;
+    return shell('sms', `${head}<div class="sm-thread"><div class="sm-meta">${t('Today', 'Сегодня')} · 14:02</div><div class="sm-b">${text}</div></div><div class="sm-sheet ${ios ? 'ios' : 'and'}"><div class="sm-group"><div class="sm-st">${title}</div>${items.map(opt).join('')}</div></div>`);
+  };
 
   return {
     /* shared screen parts, used by the scam trainer (trainer.js) */
@@ -548,6 +558,142 @@ window.CSLessonsFactory = H => {
           hint: ['The blue button at the bottom pays. Check the shop and the amount once more before pressing.', 'Синяя кнопка внизу оплачивает. Ещё раз взгляните на магазин и сумму перед нажатием.'],
           ok: ['Paid! The cashier will see the payment at once.', 'Оплачено! Кассир сразу увидит оплату.'], bar: ['Payment', 'Оплата'], skin: 'kp',
           view: () => kPay('2&nbsp;340', null, false)}
+      ]
+    },
+
+    kaspibill: {
+      icon: '⌂', title: t('Pay utility bills in Kaspi', 'Оплатить коммуналку в Kaspi'),
+      description: t('Find utilities in “Payments”, check the address and the amount, then pay.', 'Найти коммунальные услуги в «Платежах», проверить адрес и сумму и оплатить.'),
+      takeaway: t('Pay bills only inside the Kaspi app, in “Payments”. Before paying, check your address and the amount. Bills never come as links from strangers.', 'Коммунальные услуги оплачивают только в приложении Kaspi, в разделе «Платежи». Перед оплатой сверяйте свой адрес и сумму. Счета не приходят ссылками от незнакомцев.'),
+      steps: [
+        {title: ['Open Kaspi.kz', 'Откройте Kaspi.kz'], text: ['Find the red Kaspi.kz icon and open it.', 'Найдите красный значок Kaspi.kz и откройте его.'],
+          hint: ['Kaspi.kz is a red icon with a white circle. The name is under it.', 'Kaspi.kz: красный значок с белым кругом. Название подписано под ним.'],
+          ok: ['Kaspi.kz is open.', 'Kaspi.kz открыт.'], bar: null, home: true,
+          view: () => grid([appT('whatsapp', 'WhatsApp', notThis), known('photos', 'Photos', 'Фото', notThis), appT('egov', 'eGov mobile', [`This is eGov, government services. You need the red Kaspi.kz icon.`, `Это eGov, госуслуги. Нужен красный значок Kaspi.kz.`]), appT('kaspi', 'Kaspi.kz'), known('clock', 'Clock', 'Часы', notThis)])},
+        {title: ['Open “Payments”', 'Откройте «Платежи»'], text: ['On the main screen, tap “Payments”.', 'На главном экране нажмите «Платежи».'],
+          hint: ['“Payments” has an icon that looks like a receipt. It is for bills, phone and fines. “Transfers” is for sending money to a person.', 'У «Платежей» значок в виде чека. Там оплачивают коммунальные услуги, связь и штрафы. «Переводы» нужны, чтобы отправить деньги человеку.'],
+          ok: ['Payments are open.', 'Платежи открыты.'], bar: ['Kaspi.kz', 'Kaspi.kz'], skin: 'kp',
+          view: () => kHome('payments')},
+        {title: ['Choose “Utilities”', 'Выберите «Коммунальные услуги»'], text: ['You want to pay for the flat: water, heating, electricity. Choose “Utilities”.', 'Нужно оплатить квартиру: воду, отопление, свет. Выберите «Коммунальные услуги».'],
+          hint: ['Water, heating, gas and electricity are all in “Utilities”. Mobile phone and internet are separate.', 'Вода, отопление, газ и свет находятся в «Коммунальных услугах». Мобильная связь и интернет — отдельно.'],
+          ok: ['Utilities are open. Kaspi already knows your address.', 'Коммунальные услуги открыты. Kaspi уже знает ваш адрес.'], bar: ['Payments', 'Платежи'], skin: 'kp',
+          view: () => {
+            const other = what => [`This is ${what[0]}. The flat bills are in “Utilities”.`, `Это ${what[1]}. Счета за квартиру — в «Коммунальных услугах».`];
+            const row = (ic, label, wrong) => act(`<span class="kp-ric">${kIcon(ic)}</span><span>${label}</span><i>›</i>`, wrong, 'kp-row');
+            return shell('kp', `${kHead(t('Payments', 'Платежи'))}<div class="kp-page"><div class="kp-search kp-psearch">${kIcon('search', '#8e8e93', 20)}<span>${t('Search payments', 'Поиск платежей')}</span></div><div class="kp-card kp-list">${row('home', t('Utilities', 'Коммунальные услуги'))}${row('chat', t('Mobile phone', 'Мобильная связь'), other(['mobile phone top-up', 'пополнение телефона']))}${row('globe', t('Internet and TV', 'Интернет и ТВ'), other(['internet and TV', 'интернет и ТВ']))}${row('gov', t('Taxes and fines', 'Налоги и штрафы'), other(['taxes and fines', 'налоги и штрафы']))}${row('card', t('Loans', 'Погашение кредитов'), other(['loan repayment', 'погашение кредитов']))}</div></div>`);
+          }},
+        {title: ['Check and pay', 'Проверьте и оплатите'], text: ['This is the bill for your flat at Abaya 12, flat 34. Check the address and the amount, then press “Pay”.', 'Это счёт за вашу квартиру: ул. Абая 12, кв. 34. Сверьте адрес и сумму и нажмите «Оплатить».'],
+          hint: ['At the top is the address. Below are the services and the total. The red button at the bottom pays the whole bill from your Kaspi Gold card.', 'Вверху написан адрес. Ниже — услуги и итоговая сумма. Красная кнопка внизу оплачивает весь счёт с карты Kaspi Gold.'],
+          ok: ['Paid! Kaspi saves the receipt in “Payments” → “History”.', 'Оплачено! Квитанция сохранится в «Платежах» → «История».'], bar: ['Utilities', 'Коммунальные услуги'], skin: 'kp',
+          view: () => {
+            const line = (en, ru, sum) => `<div class="kp-bl"><span>${t(en, ru)}</span><b>${sum}&nbsp;₸</b></div>`;
+            const banner = act(`<span class="eg-ban-i">${g('chat', '#fff', 16)}</span><span><b>+7 747 ••• •• 12</b><small>${t('Utility debt! Pay today at erc-kz.top or the water will be cut off', 'Долг за коммуналку! Оплатите сегодня на erc-kz.top, иначе отключат воду')}</small></span>`, [`This SMS is from an unknown number with a strange link. Real bills are in the Kaspi app. Do not open it.`, `Это SMS от незнакомого номера со странной ссылкой. Настоящие счета — в приложении Kaspi. Не открывайте его.`], 'eg-ban kp-ban');
+            return shell('kp', `${banner}${kHead(t('Utilities', 'Коммунальные услуги'))}<div class="kp-page"><div class="kp-card kp-bill"><small>${t('Address', 'Адрес')}</small><strong>${t('Abaya St 12, flat 34', 'ул. Абая 12, кв. 34')}</strong><small>${t('Astana ERC · October 2026', 'Астана ЕРЦ · октябрь 2026')}</small></div><div class="kp-card kp-bill">${line('Heating', 'Отопление', '7&nbsp;920')}${line('Hot and cold water', 'Горячая и холодная вода', '2&nbsp;860')}${line('Electricity', 'Электроэнергия', '1&nbsp;700')}<div class="kp-bl total"><span>${t('Total', 'Итого')}</span><b>12&nbsp;480&nbsp;₸</b></div></div>${act(t('Pay 12 480 ₸', 'Оплатить 12 480 ₸'), null, 'kp-pay')}</div>`);
+          }}
+      ]
+    },
+
+    wavideo: {
+      icon: '◉', title: t('Video call your grandchildren in WhatsApp', 'Видеозвонок внукам в WhatsApp'),
+      description: t('Open a chat, start a video call and turn on your microphone.', 'Открыть чат, начать видеозвонок и включить микрофон.'),
+      takeaway: t('The camera icon at the top of a chat starts a video call, the handset starts a voice call. If you are not heard, check the microphone button.', 'Значок камеры вверху чата начинает видеозвонок, трубка — обычный звонок. Если вас не слышно, проверьте кнопку микрофона.'),
+      steps: [
+        {title: ['Open WhatsApp', 'Откройте WhatsApp'], text: ['Find the green WhatsApp icon and open it.', 'Найдите зелёный значок WhatsApp и откройте его.'],
+          hint: ['WhatsApp is a green icon with a white speech bubble and a phone handset.', 'WhatsApp: зелёный значок с белым облачком и трубкой.'],
+          ok: ['WhatsApp is open.', 'WhatsApp открыт.'], bar: null, home: true,
+          view: () => grid([appT('telegram', 'Telegram', [`This is Telegram. You need the green WhatsApp icon.`, `Это Telegram. Нужен зелёный значок WhatsApp.`]), known('camera', 'Camera', 'Камера', [`The Camera app takes photos. Video calls are made in WhatsApp.`, `Приложение «Камера» снимает фото. Видеозвонки делают в WhatsApp.`]), appT('whatsapp', 'WhatsApp'), known('photos', 'Photos', 'Фото', notThis), known('clock', 'Clock', 'Часы', notThis)])},
+        {title: ['Open the chat with Arman', 'Откройте чат с Арманом'], text: ['Your grandson Arman wants to see you. Open his chat.', 'Внук Арман хочет вас увидеть. Откройте чат с ним.'],
+          hint: ['Each chat shows a name and the last message. Choose the one named Arman.', 'В каждом чате видно имя и последнее сообщение. Выберите чат с именем Арман.'],
+          ok: ['The chat with Arman is open.', 'Чат с Арманом открыт.'], bar: ['Chats', 'Чаты'], skin: 'wa',
+          view: () => {
+            const ios = isIos();
+            const top = ios ? `<div class="mx-ios-top"><span class="mx-dots">${g('more', '#000', 20)}</span><span class="mx-hi">${g('camera', '#000', 22)}<span class="mx-plus">${g('plus', '#fff', 18)}</span></span></div><h3 class="mx-large">${t('Chats', 'Чаты')}</h3>` : `<div class="mx-wa-bar"><strong>WhatsApp</strong><span class="mx-hi">${g('camera', '#1d1f1f')}${g('more', '#1d1f1f')}</span></div>`;
+            const rows = chatRow(ava('С', '#5b8def'), t('Daughter Saule', 'Дочь Сауле'), t('Mum, I will call in the evening', 'Мама, вечером позвоню'), '13:05', 0, [`This is your daughter. The task is to call Arman.`, `Это дочь. В задании нужно позвонить Арману.`])
+              + chatRow(ava('А', '#e0a03a'), t('Arman (grandson)', 'Арман (внук)'), t('Grandma, call me on video! 📹', 'Әже, позвони по видео! 📹'), '12:58', 1, null)
+              + chatRow(ava('П', '#7a8b3a'), t('Clinic No. 5', 'Поликлиника №5'), t('Your appointment: Thursday 10:30', 'Ваша запись: четверг 10:30'), t('Yesterday', 'Вчера'), 0, [`This is the clinic. The task is to call Arman.`, `Это поликлиника. В задании нужно позвонить Арману.`]);
+            return shell('wa', `${top}<div class="mx-search">${g('search', '#8696a0', 20)}<span>${t('Search', 'Поиск')}</span></div><div class="mx-list">${rows}</div>${waTabs()}`);
+          }},
+        {title: ['Start a video call', 'Начните видеозвонок'], text: ['At the top of the chat, tap the video camera icon.', 'Вверху чата нажмите значок видеокамеры.'],
+          hint: ['There are two icons at the top right. The video camera starts a video call, so Arman will see you. The handset is a voice call without video.', 'Вверху справа два значка. Видеокамера начинает видеозвонок: Арман будет вас видеть. Трубка — обычный звонок без видео.'],
+          ok: ['Calling… Arman answered!', 'Идёт вызов… Арман ответил!'], bar: ['Arman', 'Арман'], skin: 'wa',
+          view: () => {
+            const ios = isIos();
+            const right = act(g('video', 'currentColor', 24), null, 'mx-hbtn') + act(g('phone', 'currentColor', 21), [`The handset is a voice call without video. For a video call, tap the video camera icon next to it.`, `Трубка — это обычный звонок без видео. Для видеозвонка нажмите значок видеокамеры рядом.`], 'mx-hbtn');
+            const clip = act(g(ios ? 'plus' : 'clip', '#54656f', 24), [`This adds a file. The video call button is at the top of the chat.`, `Это прикрепляет файл. Кнопка видеозвонка — вверху чата.`], 'mx-ib');
+            return shell('wa', `${chatHead('wa', t('Arman', 'Арман'), t('online', 'в сети'), ava('А', '#e0a03a', 36), right)}<div class="mx-wall">${day(t('Today', 'Сегодня'))}${msg(t('Grandma, hi! 👋', 'Әже, привет! 👋'), false, '12:57')}${msg(t('Call me on video! 📹', 'Позвони по видео! 📹'), false, '12:58')}</div><div class="mx-compose">${clip}<span class="mx-input"><span class="mx-ph">${t('Message', 'Сообщение')}</span></span>${act(g('mic', '#fff', 20), [`This records a voice message. The video call button is at the top of the chat.`, `Это запись голосового сообщения. Кнопка видеозвонка — вверху чата.`], 'mx-send')}</div>`);
+          }},
+        {title: ['Arman cannot hear you', 'Арман вас не слышит'], text: ['Arman says: “Grandma, I can’t hear you!” Your microphone is off. Turn it on.', 'Арман говорит: «Әже, тебя не слышно!» Ваш микрофон выключен. Включите его.'],
+          hint: ['At the bottom are the call buttons. A crossed-out microphone means you are muted. Tap it once. The red button ends the call.', 'Внизу кнопки звонка. Перечёркнутый микрофон значит, что вас не слышно. Нажмите на него один раз. Красная кнопка завершает звонок.'],
+          ok: ['The microphone is on. Arman can hear you now. Enjoy the call!', 'Микрофон включён, теперь Арман вас слышит. Приятного разговора!'], bar: ['Video call', 'Видеозвонок'], skin: 'wa',
+          view: () => {
+            const b = (icon, label, wrong, cls = '') => act(`<i class="vc-round ${cls}">${icon}</i><span>${label}</span>`, wrong, 'vc-btn');
+            const micOff = `<span class="vc-off">${g('mic', '#fff', 26)}</span>`;
+            return `<div class="vc">${'<div class="vc-video" aria-hidden="true"><span class="vc-face">А</span></div>'}<div class="vc-top"><strong>${t('Arman', 'Арман')}</strong><small>00:12 · ${t('end-to-end encrypted', 'защищено шифрованием')}</small></div><div class="vc-say">${t('“Grandma, I can’t hear you!”', '«Әже, тебя не слышно!»')}</div><div class="vc-self" aria-hidden="true">${t('You', 'Вы')}</div><div class="vc-bar">${b(g('camera', '#fff', 24), t('Flip', 'Камера'), [`This switches between the front and back camera. Arman cannot hear you because the microphone is off.`, `Это переключает переднюю и заднюю камеру. Арман не слышит вас, потому что выключен микрофон.`])}${b(g('video', '#fff', 24), t('Video', 'Видео'), [`This turns your video off. Arman needs to hear you: turn on the microphone.`, `Это выключает ваше видео. А Арману нужно вас слышать: включите микрофон.`])}${b(micOff, t('Microphone', 'Микрофон'), null, 'muted')}${b(g('phone', '#fff', 26), t('End', 'Завершить'), [`The red button ends the call. Do not hang up: turn on the microphone instead.`, `Красная кнопка завершает звонок. Не кладите трубку, а включите микрофон.`], 'red')}</div></div>`;
+          }}
+      ]
+    },
+
+    smscode: {
+      icon: '✉', title: t('An SMS with a code: what to do', 'Пришло СМС с кодом: что делать'),
+      description: t('Read the SMS, refuse a caller who asks for the code and call the bank yourself.', 'Прочитать СМС, отказать звонящему, который просит код, и самому позвонить в банк.'),
+      takeaway: t('An SMS code is like a key to your account. Never tell it to anyone, even a “bank employee” or “police”. If you did not ask for a code, call the bank yourself using the number on your card.', 'Код из СМС — это ключ от вашего счёта. Его не называют никому, даже «сотруднику банка» или «полиции». Если вы код не запрашивали, сами позвоните в банк по номеру с карты.'),
+      steps: [
+        {title: ['Open the new SMS', 'Откройте новое СМС'], text: ['A new SMS has arrived. Open it.', 'Пришло новое СМС. Откройте его.'],
+          hint: ['The notification at the top shows who sent it. Tap the notification to read the whole message.', 'Уведомление вверху показывает, от кого сообщение. Нажмите на него, чтобы прочитать полностью.'],
+          ok: ['The SMS is open. Read it carefully.', 'СМС открыто. Прочитайте его внимательно.'], bar: null, home: true,
+          view: () => {
+            const first = [`First read the new SMS: tap the notification at the top.`, `Сначала прочитайте новое СМС: нажмите на уведомление вверху.`];
+            const note = act(`<span class="sm-nic">${g('chat', '#fff', 18)}</span><span class="sm-nt"><b>Kaspi.kz</b><small>${t('Code to log in on a new device: 4821…', 'Код для входа на новом устройстве: 4821…')}</small></span><em>${t('now', 'сейчас')}</em>`, null, 'sm-note');
+            return `${note}<div class="app-grid lesson-apps">${[known('photos', 'Photos', 'Фото', first), known('clock', 'Clock', 'Часы', first), known('camera', 'Camera', 'Камера', first), known('mail', 'Mail', 'Почта', first)].join('')}</div>`;
+          }},
+        {title: ['Did you ask for this code?', 'Вы просили этот код?'], text: ['You were not logging in to Kaspi on another phone. What does this SMS mean?', 'Вы не входили в Kaspi на другом телефоне. Что значит это СМС?'],
+          hint: ['A login code comes when someone tries to open your account. If it was not you, someone else is trying, and the code is the last lock.', 'Код для входа приходит, когда кто-то пытается открыть ваш счёт. Если это были не вы, значит, пытается кто-то другой, и код — последний замок.'],
+          ok: ['Right: someone is trying to get into your account. The code must stay with you.', 'Верно: кто-то пытается войти в ваш счёт. Код должен остаться у вас.'], bar: ['Messages', 'Сообщения'], skin: 'sms',
+          view: () => smsScreen('Kaspi.kz', 'K', t('Code to log in to Kaspi.kz on a new device: <b>4821</b>. Do not tell it to anyone, including bank employees.', 'Код для входа в Kaspi.kz на новом устройстве: <b>4821</b>. Никому не сообщайте его, в том числе сотрудникам банка.'), t('What does this SMS mean?', 'Что значит это СМС?'), [o('It is a gift or a bonus from the bank', 'Это подарок или бонус от банка', [`No. A login code is not a bonus. Someone is trying to open your account.`, `Нет. Код для входа — не бонус. Кто-то пытается открыть ваш счёт.`]), o('Someone is trying to log in to my account', 'Кто-то пытается войти в мой счёт'), o('The code must be sent back to the bank', 'Код нужно отправить обратно банку', [`No. The bank never asks you to send the code back. It only warns you.`, `Нет. Банк никогда не просит отправить код обратно. Он только предупреждает.`])])},
+        {title: ['A call “from the bank”', 'Звонок «из банка»'], text: ['Right away someone calls: “Bank security. Tell me the code from the SMS to cancel the login.” What do you do?', 'Сразу звонят: «Служба безопасности банка. Продиктуйте код из СМС, чтобы отменить вход». Что вы сделаете?'],
+          hint: ['This is the most common trick: first the SMS, then a call asking for the code. A real bank never asks for it. You can just hang up.', 'Это самая частая уловка: сначала СМС, потом звонок с просьбой назвать код. Настоящий банк его не спрашивает. Можно просто положить трубку.'],
+          ok: ['Correct: you hung up and kept the code. The scammers got nothing.', 'Верно: вы положили трубку и сохранили код. Мошенники ничего не получили.'], bar: ['Call', 'Звонок'], skin: 'sms',
+          view: () => smsScreen('Kaspi.kz', 'K', t('Code to log in to Kaspi.kz on a new device: <b>4821</b>. Do not tell it to anyone, including bank employees.', 'Код для входа в Kaspi.kz на новом устройстве: <b>4821</b>. Никому не сообщайте его, в том числе сотрудникам банка.'), `<b class="sm-ring">${g('phone', '#fff', 14)}</b> ${t('+7 727 ••• •• 19 is calling: “Bank security. Tell me the code to cancel the login.”', '+7 727 ••• •• 19 звонит: «Служба безопасности банка. Продиктуйте код, чтобы отменить вход».')}`, [o('Tell them the code so they cancel the login', 'Назвать код, чтобы отменили вход', [`Never. With this code the scammer will log in to your account and take the money.`, `Ни в коем случае. С этим кодом мошенник войдёт в ваш счёт и заберёт деньги.`]), o('Hang up without saying the code', 'Положить трубку, не называя код'), o('Type the code on the phone keypad', 'Набрать код на клавиатуре телефона', [`No. Scammers can hear the key tones. Hang up.`, `Нет. Мошенники слышат сигналы кнопок. Положите трубку.`])])},
+        {title: ['Check it yourself', 'Проверьте сами'], text: ['You want to be sure your account is safe. How do you contact the bank?', 'Вы хотите убедиться, что со счётом всё в порядке. Как связаться с банком?'],
+          hint: ['Call only the number you find yourself: on the back of your card or in the official app. Kaspi’s number is 9999. Do not call back numbers from SMS or calls.', 'Звоните только по номеру, который нашли сами: на обороте карты или в официальном приложении. У Kaspi это 9999. Не перезванивайте на номера из СМС и звонков.'],
+          ok: ['Right: you called the bank yourself, using the number on your card.', 'Правильно: вы сами позвонили в банк по номеру с карты.'], bar: ['Bank', 'Банк'], skin: 'sms',
+          view: () => smsScreen('Kaspi.kz', 'K', t('Code to log in to Kaspi.kz on a new device: <b>4821</b>. Do not tell it to anyone, including bank employees.', 'Код для входа в Kaspi.kz на новом устройстве: <b>4821</b>. Никому не сообщайте его, в том числе сотрудникам банка.'), t('How do you contact the bank?', 'Как связаться с банком?'), [o('Call back the number that just called', 'Перезвонить на номер, который только что звонил', [`No. That was the scammer. Find the bank’s number yourself.`, `Нет. Это был мошенник. Номер банка ищите сами.`]), o('Call 9999, the number on the back of my card', 'Позвонить на 9999 — номер на обороте моей карты'), o('Reply to the SMS and ask', 'Ответить на СМС и спросить', [`SMS from the bank are sent automatically, nobody reads replies. Call the number on the card.`, `СМС банка рассылаются автоматически, ответы никто не читает. Позвоните по номеру с карты.`])])}
+      ]
+    },
+
+    doctor: {
+      icon: '✚', title: t('Book a doctor in eGov', 'Записаться к врачу через eGov'),
+      description: t('Find the doctor appointment service, choose a doctor and a free time.', 'Найти услугу записи к врачу, выбрать врача и свободное время.'),
+      takeaway: t('Booking a doctor through eGov or your clinic is free. If someone asks you to pay for an appointment by a link, it is a scam.', 'Запись к врачу через eGov или поликлинику бесплатная. Если просят оплатить запись по ссылке — это обман.'),
+      steps: [
+        {title: ['Open eGov mobile', 'Откройте eGov mobile'], text: ['Find the official “eGov mobile” app and open it.', 'Найдите официальное приложение «eGov mobile» и откройте его.'],
+          hint: ['The official app is a blue square with the white word “egov” and “mobile” under it.', 'Официальное приложение: синий квадрат с белой надписью «egov» и словом «mobile».'],
+          ok: ['eGov mobile is open. You are already logged in.', 'eGov mobile открыт. Вы уже вошли.'], bar: null, home: true,
+          view: () => grid([appT('kaspi', 'Kaspi.kz', [`This is Kaspi, a bank. You need eGov mobile.`, `Это Kaspi, банк. Нужен eGov mobile.`]), known('photos', 'Photos', 'Фото', notThis), tile('#c94f4f', svg('M12 2 1 21h22L12 2Zm1 15h-2v-2h2v2Zm0-4h-2V9h2v4Z'), 'Doctor Online 24', 'Врач Онлайн 24', [`This is not an official app. Book doctors through eGov mobile or your clinic.`, `Это не официальное приложение. К врачу записываются через eGov mobile или свою поликлинику.`]), appT('egov', 'eGov mobile')])},
+        {title: ['Find “Doctor appointment”', 'Найдите «Запись к врачу»'], text: ['On the main screen, tap “Doctor appointment”.', 'На главном экране нажмите «Запись к врачу».'],
+          hint: ['Popular services are shown as tiles. The one you need has a handset icon and the words “Doctor appointment”.', 'Популярные услуги показаны плитками. Нужная называется «Запись к врачу».'],
+          ok: ['The service is open. Your clinic is filled in automatically.', 'Услуга открыта. Ваша поликлиника подставилась сама.'], bar: ['Services', 'Услуги'], skin: 'eg',
+          view: () => {
+            const svc = (icon, en, ru, wrong) => act(`<span class="eg-si">${g(icon, '#2f6fe4', 22)}</span><span>${t(en, ru)}</span>`, wrong, 'eg-svc');
+            const other = [`That is a different service. Look for “Doctor appointment”.`, `Это другая услуга. Ищите «Запись к врачу».`];
+            return shell('eg', `<div class="eg-top"><span class="mx-ava eg-me">${g('person', '#fff', 20)}</span><span class="eg-hi"><small>${t('Good afternoon', 'Добрый день')}</small><strong>${t('Gulnara', 'Гульнара')}</strong></span>${g('bell', '#fff', 22)}</div><div class="eg-sr"><span class="mx-search">${g('search', '#8a94a6', 20)}<span>${t('Search services', 'Поиск услуг')}</span></span><span class="eg-ai">AI</span></div><div class="eg-body"><h4>${t('Popular services', 'Популярные услуги')}</h4><div class="eg-grid">${svc('people', 'Family composition certificate', 'Справка о составе семьи', other)}${svc('phone', 'Doctor appointment', 'Запись к врачу')}${svc('block', 'Fines', 'Штрафы', other)}${svc('person', 'Address certificate', 'Адресная справка', other)}</div></div>${egTabs(1)}`);
+          }},
+        {title: ['Choose a therapist', 'Выберите терапевта'], text: ['Your knee hurts. First you go to a therapist (GP). Choose “Therapist”.', 'У вас болит колено. Сначала идут к терапевту. Выберите «Терапевт».'],
+          hint: ['A therapist (GP) is the first doctor to see. They will send you to a specialist if needed.', 'Терапевт — первый врач, к которому идут. Если нужно, он направит к узкому специалисту.'],
+          ok: ['The therapist is chosen. Now pick a time.', 'Терапевт выбран. Теперь выберите время.'], bar: ['Doctor appointment', 'Запись к врачу'], skin: 'eg',
+          view: () => {
+            const doc = (en, ru, sub, wrong) => act(`<span class="eg-si">${g('person', '#2f6fe4', 22)}</span><span class="eg-lt"><strong>${t(en, ru)}</strong><small>${sub}</small></span><i>›</i>`, wrong, 'eg-row');
+            const spec = [`This is a specialist. Without a referral, you start with the therapist.`, `Это узкий специалист. Без направления сначала идут к терапевту.`];
+            return shell('eg', `<div class="eg-head"><strong>${t('Doctor appointment', 'Запись к врачу')}</strong></div><div class="eg-body"><div class="eg-clinic"><small>${t('Your clinic', 'Ваша поликлиника')}</small><strong>${t('City clinic No. 5, Astana', 'Городская поликлиника №5, Астана')}</strong></div><div class="eg-list">${doc('Dentist', 'Стоматолог', t('paid services', 'платные услуги'), spec)}${doc('Therapist', 'Терапевт', t('Dr. Seitkali A. · free', 'Сейткали А. · бесплатно'))}${doc('Eye doctor', 'Офтальмолог', t('by referral', 'по направлению'), spec)}${doc('Surgeon', 'Хирург', t('by referral', 'по направлению'), spec)}</div></div>`);
+          }},
+        {title: ['Pick a time and confirm', 'Выберите время и подтвердите'], text: ['Tomorrow at 10:30 suits you. It is already chosen. Press “Book”.', 'Вам удобно завтра в 10:30. Время уже выбрано. Нажмите «Записаться».'],
+          hint: ['Free times are white, taken ones are grey. The blue button at the bottom confirms. The appointment is free, nobody asks you to pay.', 'Свободное время белое, занятое серое. Синяя кнопка внизу подтверждает запись. Запись бесплатная, платить никому не нужно.'],
+          ok: ['You are booked: tomorrow at 10:30 with the therapist. eGov will send a reminder in “Messages”.', 'Вы записаны: завтра в 10:30 к терапевту. eGov пришлёт напоминание в «Сообщения».'], bar: ['Therapist', 'Терапевт'], skin: 'eg',
+          view: () => {
+            const slot = (time, st) => `<span class="eg-slot ${st}">${time}</span>`;
+            const banner = act(`<span class="eg-ban-i">${g('chat', '#fff', 16)}</span><span><b>+7 705 ••• •• 63</b><small>${t('Pay 2 000 ₸ at med-zapis.top to confirm the appointment', 'Оплатите 2 000 ₸ на med-zapis.top для подтверждения записи')}</small></span>`, [`This is a scam. Booking through eGov is free, and the link is not egov.kz. Ignore it.`, `Это обман. Запись через eGov бесплатная, а ссылка не egov.kz. Не обращайте внимания.`], 'eg-ban');
+            return shell('eg', `${banner}<div class="eg-head"><strong>${t('Therapist', 'Терапевт')}</strong></div><div class="eg-body"><div class="eg-clinic"><small>${t('Dr. Seitkali A. · room 214', 'Сейткали А. · кабинет 214')}</small><strong>${t('Tomorrow, Thursday', 'Завтра, четверг')}</strong></div><div class="eg-slots" aria-hidden="true">${slot('09:00', 'busy')}${slot('09:30', 'busy')}${slot('10:00', '')}${slot('10:30', 'on')}${slot('11:00', '')}${slot('11:30', 'busy')}</div>${act(t('Book for 10:30', 'Записаться на 10:30'), null, 'eg-book')}</div>`);
+          }}
       ]
     }
   };
