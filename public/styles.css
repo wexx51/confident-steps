@@ -1228,3 +1228,33 @@ html.high-contrast :is(.st-track,.st-rate){background-color:#444!important}html.
 .gr-res.correct,.ep-tile.correct,.ep-row.correct,.ep-ans.correct{background:#e6f3e6;border-color:#3f9158;box-shadow:inset 0 0 0 2px #3f9158}
 @media(max-width:560px){.ep-nav,.gr-logo{display:none}.ep-grid{grid-template-columns:1fr}.gr-tabs span:nth-child(n+4){display:none}.gr{padding:12px}.ep-body{padding:12px}}
 @media(max-width:560px){.cr-nav .fwd{display:none}.cr-omni{margin:0 2px}}
+/* touch targets inside practice screens: at least 48px */
+.ml-ic{min-width:48px;min-height:48px}.ml-tools{padding:0 8px}
+.kp-tabbtn{min-width:56px;min-height:48px;justify-content:center;margin:-6px 0 -2px}
+.ml-send{width:44px;height:44px;padding:6px;background-clip:content-box;flex:none}.mx-mail.and .ml-send{width:44px;height:44px;padding:0}
+.ml-ok{min-height:48px}.mx-sysbtn{min-height:44px}.kp-cancel{min-width:64px;min-height:44px}
+.mx .br-x{width:44px;height:44px;top:2px;right:2px}.mx .br-close{min-height:48px}
+.mx-wa.ios .mx-send{width:44px;height:44px;padding:5px;background-clip:content-box;margin:-5px}
+.ml-note:last-child{margin-bottom:38px}
+.ml-head.and{gap:2px;padding-inline:6px 4px}.ml-head.and strong{min-width:0;margin-left:6px}
+/* phone: the practice screen comes right after the instruction */
+@media(max-width:760px){
+body.in-practice .site-header nav>a{display:none}
+body.in-practice .site-header .header-inner{padding-bottom:12px}
+#training-view .training-header{margin-bottom:16px}
+#training-view .training-header h1{font-size:1.6rem;margin-top:6px}
+#training-view .training-header .device-name{margin-top:8px}
+#training-view .training-layout{display:flex;flex-direction:column;gap:0}
+#training-view .instruction-panel{display:contents}
+#training-view .instruction-panel>*{order:1}
+#training-view .simulator{order:2}
+#training-view .instruction-panel>.hint-button,#training-view .hint-box,#training-view #assistant-slot{order:3}
+#training-view .training-nav{order:4;margin-top:0}
+#training-view .safe-note{order:5}
+#training-view .instruction-panel h2{margin-bottom:6px}
+#training-view .step-progress{margin:8px 0 14px}
+#training-view .instruction-text{margin-bottom:14px}
+#training-view .simulator{margin-bottom:16px}
+#training-view .instruction-panel>.hint-button{margin:0 0 8px;align-self:flex-start}
+#training-view .training-nav{margin-top:8px}
+}

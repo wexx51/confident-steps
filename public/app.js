@@ -102,6 +102,7 @@
     if (view !== currentView) stopSpeaking();
     currentView = view;
     ['home', 'training', 'confidence', 'survey', 'chat', 'cheatsheet', 'certificate', 'project', 'summary', 'invite', 'trainer', 'stats'].forEach(name => { $('#' + name + '-view').hidden = name !== view; });
+    document.body.classList.toggle('in-practice', view === 'training');
     if (scroll) window.scrollTo({top: 0, behavior: 'instant'});
   }
   function home(section) {
@@ -274,6 +275,8 @@
     scenario = null;
     showView('training');
     renderTraining(true);
+    // on a phone, skip the site header so the practice screen is in view straight away
+    if (matchMedia('(max-width: 760px)').matches) $('#training-view').scrollIntoView({block: 'start', behavior: 'instant'});
     track('start', {id, os: curOs()});
   }
 
