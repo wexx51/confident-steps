@@ -393,10 +393,10 @@
       ],
       address: [
         {title: t('Choose the exact official address', 'Выберите точный официальный адрес'),
-          text: t(`Imagine you have ${phone ? 'opened a browser on your phone' : 'opened a browser on your computer'}. For this exercise, find egov.kz with no extra words or changed letters.`, `Представьте, что вы ${phone ? 'открыли браузер на телефоне' : 'открыли браузер на компьютере'}. Для этого задания найдите адрес egov.kz без добавлений и замен букв.`),
-          hint: t('Read the whole address. The number 0 looks like the letter o. Extra words or a different ending can lead to another website. The addresses below are only text choices within this exercise.', 'Читайте адрес целиком. Цифра 0 похожа на букву o. Добавленные слова и другой конец адреса могут вести на другой сайт. Адреса ниже — только текстовые варианты внутри упражнения.')},
+          text: phone ? t('Imagine you have opened a browser on your phone. For this exercise, find egov.kz with no extra words or changed letters.', 'Представьте, что вы открыли браузер на телефоне. Для этого задания найдите адрес egov.kz без добавлений и замен букв.') : t('You typed “egov” into Google. Open the result whose address is exactly egov.kz. Careful: the first results are not always the official website.', 'Вы ввели в Google слово «egov». Откройте результат, у которого адрес ровно egov.kz. Осторожно: первые строки — не всегда официальный сайт.'),
+          hint: phone ? t('Read the whole address. The number 0 looks like the letter o. Extra words or a different ending can lead to another website. The addresses below are only text choices within this exercise.', 'Читайте адрес целиком. Цифра 0 похожа на букву o. Добавленные слова и другой конец адреса могут вести на другой сайт. Адреса ниже — только текстовые варианты внутри упражнения.') : t('Look at the grey address under the site name, not at the big blue title. The word “Sponsored” marks a paid advertisement. The number 0 looks like the letter o.', 'Смотрите на серый адрес под названием сайта, а не на крупный синий заголовок. Слово «Реклама» означает платное объявление. Цифра 0 похожа на букву o.')},
         {title: t('Open the service information', 'Откройте информацию об услуге'), text: t('You have checked the address. Now find “Centre information”. We use fictional information so you can practise without pressure.', 'Адрес проверен. Теперь найдите раздел «Информация о работе центра». Мы используем вымышленные сведения, чтобы спокойно потренироваться.'),
-          hint: phone ? t('On a phone, a section often appears as a large row or tile. Tap the section name.', 'На телефоне нужный раздел часто выглядит как крупная строка или плитка. Нажмите на название раздела.') : t('On a computer, you usually open a section by clicking its name or a button. Use the text to choose here.', 'На компьютере раздел обычно открывается щелчком по названию или кнопке. Сейчас выбирайте по тексту.')},
+          hint: phone ? t('On a phone, a section often appears as a large row or tile. Tap the section name.', 'На телефоне нужный раздел часто выглядит как крупная строка или плитка. Нажмите на название раздела.') : t('Click the name of the section. Over anything you can click, the mouse arrow turns into a small hand.', 'Щёлкните по названию раздела. Над всем, что можно нажать, стрелка мыши превращается в ладошку.')},
         {title: t('Find opening hours', 'Найдите часы работы'), text: t('Select “Opening hours”. Before contacting a real service, it helps to read its requirements and schedule.', 'Откройте пункт «Часы работы». В реальном обращении полезно сначала прочитать условия и расписание.'), hint: t('Look for words related to your question. You do not need to open every section.', 'Ищите конкретные слова, связанные с вашим вопросом. Не обязательно открывать каждый раздел подряд.')},
         {title: t('Read and choose an answer', 'Прочитайте и выберите ответ'), text: t('According to this practice schedule, when is the centre open?', 'Согласно учебному расписанию, когда открыт центр?'), hint: t('Check your answer against the information on the screen. This is not a memory test: the schedule stays in view.', 'Сверьте ответ с информацией на экране. Здесь нет проверки памяти: расписание остаётся перед вами.')}
       ],
@@ -421,7 +421,7 @@
   /* ---------- computer frame (Windows / Mac) ---------- */
   function deskUrl() {
     if (lessonIds.includes(active.id)) { const st = lessons()[active.id].steps[active.step]; if (st.url !== undefined) return st.url; }
-    if (active.id === 'address') return active.step === 0 ? '' : 'egov.kz';
+    if (active.id === 'address') return ['egov', 'egov.kz', 'egov.kz/centre', 'egov.kz/centre/hours'][active.step];
     return {text: 'practice.kz/reading', file: 'learning-centre.kz', message: 'mail.practice.kz'}[active.id];
   }
   /* Google Chrome on Windows, drawn after the 2024+ design: tab strip, toolbar with the address field, bookmarks bar.
@@ -493,6 +493,38 @@
       + `${mi('Print…', 'Печать…', 'Ctrl+P')}${mi('Settings', 'Настройки')}<hr>${mi('Exit', 'Выход')}</div>`;
   }
 
+  /* address lesson on a computer: a Google results page with an advert and a look-alike, then a practice page in the eGov style */
+  function googleResults() {
+    const res = o => `<button type="button" class="gr-res" data-sim="${o.sim}"${o.testid ? ` data-testid="${o.testid}"` : ''}>${o.ad ? `<span class="gr-ad">${t('Sponsored', 'Реклама')}</span>` : ''}<span class="gr-site"><i class="gr-fav" style="--c:${o.c}">${o.l}</i><span><b>${o.name}</b><small>${o.url}</small></span></span><span class="gr-title">${o.title}</span><span class="gr-snip">${o.snip}</span></button>`;
+    const logo = [['G', '#4285f4'], ['o', '#ea4335'], ['o', '#fbbc05'], ['g', '#4285f4'], ['l', '#34a853'], ['e', '#ea4335']].map(([c, k]) => `<b style="color:${k}">${c}</b>`).join('');
+    return `<div class="gr"><div class="gr-head"><span class="gr-logo" aria-hidden="true">${logo}</span><span class="gr-box" aria-hidden="true"><span>egov</span>${crI('close', 18, '#70757a')}<i></i>${crI('search', 20, '#4285f4')}</span></div>`
+      + `<div class="gr-tabs" aria-hidden="true"><b>${t('All', 'Все')}</b><span>${t('Images', 'Картинки')}</span><span>${t('News', 'Новости')}</span><span>${t('Videos', 'Видео')}</span><span>${t('Maps', 'Карты')}</span></div>`
+      + `<div class="gr-list">${res({ad: true, sim: 'wrong-ad', l: 'e', c: '#e37400', name: 'egov-kz.help', url: 'https://egov-kz.help › spravki', title: t('eGov certificates online — no queue, in 5 minutes', 'Справки eGov онлайн — без очереди за 5 минут'), snip: t('Any certificate in 5 minutes. Pay by card and receive it by e-mail.', 'Любая справка за 5 минут. Оплатите картой и получите на почту.')})}`
+      + `${res({sim: 'wrong-domain', l: 'e', c: '#5f6368', name: 'eg0v.kz', url: 'https://eg0v.kz › vhod', title: t('Sign in to eGov — get a certificate', 'Вход в eGov — получить справку'), snip: t('Enter your IIN and the SMS code to continue.', 'Введите ИИН и код из SMS, чтобы продолжить.')})}`
+      + `${res({sim: 'correct', testid: 'official-address', l: 'e', c: '#1a5fb4', name: 'eGov.kz', url: 'https://egov.kz', title: t('Electronic government of the Republic of Kazakhstan', 'Электронное правительство Республики Казахстан'), snip: t('Public services and information online.', 'Государственные услуги и информация онлайн.')})}</div>`
+      + `<p class="gr-note">${t('Practice search page: nothing opens on the internet.', 'Учебная страница поиска: в интернете ничего не открывается.')}</p></div>`;
+  }
+  function egovPage(s) {
+    const head = `<div class="ep-head" aria-hidden="true"><span class="ep-logo">eGov<small>.kz</small></span><span class="ep-nav"><span>${t('Services', 'Услуги')}</span><span>${t('Life situations', 'Жизненные ситуации')}</span><span>${t('Help', 'Помощь')}</span></span><span class="ep-lang">Қаз · <b>Рус</b></span></div><div class="training-stamp">${t('Practice screen · not an official service', 'Учебный макет · не официальный сервис')}</div>`;
+    const crumbs = list => `<p class="ep-crumbs" aria-hidden="true">${[t('Home', 'Главная'), ...list].join(' <i>›</i> ')}</p>`;
+    const row = (label, sim, testid = '', on = false) => `<button type="button" class="ep-row${on ? ' on' : ''}" data-sim="${sim}"${testid ? ` data-testid="${testid}"` : ''}><span>${label}</span>${crI('back', 18)}</button>`;
+    if (s === 1) {
+      const tile = (label, sub, sim, testid = '') => `<button type="button" class="ep-tile" data-sim="${sim}"${testid ? ` data-testid="${testid}"` : ''}><strong>${label}</strong><small>${sub}</small></button>`;
+      return `<div class="ep">${head}<div class="ep-body"><div class="ep-search" aria-hidden="true">${crI('search', 18, '#5f6368')}<span>${t('Search services', 'Поиск услуг')}</span></div><h3 class="ep-h">${t('Information', 'Информация')}</h3><div class="ep-grid">`
+        + tile(t('Portal news', 'Новости портала'), t('Updates and announcements', 'Обновления и объявления'), 'wrong-service')
+        + tile(t('Centre information', 'Информация о работе центра'), t('Address, opening hours, contacts', 'Адрес, часы работы, контакты'), 'correct', 'service-info')
+        + tile(t('Popular services', 'Популярные услуги'), t('Certificates, registration', 'Справки, регистрация'), 'wrong-service')
+        + tile(t('Life situations', 'Жизненные ситуации'), t('Birth, pension, moving', 'Рождение, пенсия, переезд'), 'wrong-service')
+        + `</div></div></div>`;
+    }
+    const side = s === 2
+      ? row(t('Address and contacts', 'Адрес и контакты'), 'wrong-service') + row(t('Opening hours', 'Часы работы'), 'correct', 'opening-hours') + row(t('Centre history', 'История центра'), 'wrong-service')
+      : '';
+    const hours = `<table class="ep-hours"><tr><th>${t('Monday–Friday', 'Понедельник — пятница')}</th><td>09:00–18:00</td></tr><tr><th>${t('Saturday, Sunday', 'Суббота, воскресенье')}</th><td class="off">${t('Closed', 'Выходной')}</td></tr></table>`;
+    const ask = `<div class="ep-ask"><strong>${t('When is the centre open?', 'Когда открыт центр?')}</strong><div><button type="button" class="ep-ans" data-sim="wrong-hours">${t('Every day, including weekends', 'Каждый день без выходных')}</button><button type="button" class="ep-ans" data-sim="correct" data-testid="hours-answer">${t('Weekdays, 09:00–18:00', 'По будням, с 09:00 до 18:00')}</button></div></div>`;
+    return `<div class="ep">${head}<div class="ep-body">${crumbs(s === 2 ? [t('Centre information', 'Информация о работе центра')] : [t('Centre information', 'Информация о работе центра'), t('Opening hours', 'Часы работы')])}<small class="ep-kicker">${t('Fictional learning centre', 'Вымышленный учебный центр')}</small><h3 class="ep-h">${s === 2 ? t('Centre information', 'Информация о работе центра') : t('Opening hours', 'Часы работы')}</h3>${s === 2 ? `<div class="ep-rows">${side}</div>` : hours + ask}</div></div>`;
+  }
+
   /* ---------- practice screens (phone: iPhone/Android skins, computer: browser window) ---------- */
   function screen() {
     PH.os = state.os;
@@ -537,6 +569,7 @@
     }
 
     if (id === 'address') {
+      if (!phone) return desk(s === 0 ? googleResults() : egovPage(s), deskUrl());
       const domainOpts = options([['<span class="domain-choice">egov-kz.help</span>', 'wrong-domain'], ['<span class="domain-choice">egov.kz</span>', 'correct', 'data-testid="official-address"'], ['<span class="domain-choice">eg0v.kz</span>', 'wrong-domain']]);
       const page = (url, body) => phone ? wrap(browserShell(url, body, true)) : wrap(body);
       if (s === 0) {
@@ -762,6 +795,7 @@
       'wrong-app': t('That is a different app. Look for the gear icon named “Settings”.', 'Это другое приложение. Ищите значок шестерёнки «Настройки».'),
       'retry-settings': t('That option does something else. Try again: look for text size or zoom.', 'Этот пункт отвечает за другое действие. Попробуйте ещё раз: нужный пункт связан с текстом или масштабом.'),
       'retry-display': state.os === 'ios' ? t('That option changes something else. Look for “Text Size”.', 'Этот пункт меняет другое. Найдите строку «Размер текста».') : t('That option changes something else. Look for “Font size and style”.', 'Этот пункт меняет другое. Найдите строку «Размер и стиль шрифта».'),
+      'wrong-ad': t('This is an advertisement: it is marked “Sponsored”, and its address is egov-kz.help, not egov.kz. Such sites may charge money for free services. Try again.', 'Это реклама: над ней написано «Реклама», а адрес — egov-kz.help, а не egov.kz. Такие сайты могут брать деньги за бесплатные услуги. Попробуйте ещё раз.'),
       'wrong-domain': t('That address is spelled differently. Check each letter: you need egov.kz. You can try again.', 'У этого адреса другое написание. Сверьте каждую букву: нужно egov.kz. Можно попробовать ещё раз.'),
       'wrong-service': t('That section does not answer our question. Look for the option named in the instructions. The hint is still available.', 'Этот раздел не отвечает на наш вопрос. Найдите пункт из задания; подсказка остаётся рядом.'),
       'wrong-hours': t('Look at the schedule again: Saturday and Sunday are marked as closed.', 'Посмотрите на расписание ещё раз: суббота и воскресенье отмечены как выходные.'),
